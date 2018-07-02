@@ -33,78 +33,86 @@ Total: 64 Courses.  Certificates: Specialization: 4, Individual: 29
 *: course completed with verified certificate
 
 ###### Mathematics & Statistics:
-Single Variable Calculus (Penn) (5 Courses)
-Introduction to Probability: The Science of Uncertainty (MITx)
-*Computational Probability and Inference (MITx)
-Applied Logistic Regression (OSU)
+
+- Single Variable Calculus (Penn) (5 Courses)
+- Introduction to Probability: The Science of Uncertainty (MITx)
+- *Computational Probability and Inference (MITx)
+- Applied Logistic Regression (OSU)
 
 ###### CS Fundamentals
-Introduction to Python (Microsoft)
-*Introduction to Computer Science and Programming Using Python (MITx)
-Computational Thinking and Data Science with Python (MITx)
-Software Construction in Java (MITx)
-*Advanced Software Construction in Java (MITx)
-Introduction to Linux (The Linux Foundation)
-Fundamentals of Red Hat Enterprise Linux (Red Hat)
+
+- Introduction to Python (Microsoft)
+- *Introduction to Computer Science and Programming Using Python (MITx)
+- Computational Thinking and Data Science with Python (MITx)
+- Software Construction in Java (MITx)
+- *Advanced Software Construction in Java (MITx)
+- Introduction to Linux (The Linux Foundation)
+- Fundamentals of Red Hat Enterprise Linux (Red Hat)
 
 ###### Programming Languages
-*Programming Languages: Part A (UW)
-*Programming Languages: Part B (UW)
-*Programming Languages: Part C (UW)
-Introduction to Functional Programming with Haskell (Glasgow)
-*Functional Programming in Scala (EPFL)
-*Functional Program Design (EPFL)
-*Parallel Programming (EPFL)
-*Big Data and Spark (EPFL)
-*Functional Programming with Scala Capstone (EPFL)
-Paradigms of Computer Programming: the Fundamentals (Louvain)
-Paradigms of Computer Programming: Concurrency (Louvain)
 
-###### Machine Learning:
-*Statistical Learning (Stanford)
-*Machine Learning (Stanford)
-*Machine Learning: Foundations (UW)
-*Machine Learning: Regression (UW)
-*Machine Learning: Classification (UW)
-*Machine Learning: Clustering and Retrieval (UW)
-*Learning From Data: Introductory Machine Learning Course (CalTech)
-Principles of Machine Learning (Microsoft)
-Applied Machine Learning (Microsoft)  TO BE FINISHED
-Practical Predictive Analysis (UW)
-*Neural Networks and Deep Learning (deeplearning.ai)
-*Improving Deep Neural Networks: Hyperparameter tuning, Regularization and Optimization (deeplearning.ai)
-*Structuring Machine Learning Projects (deeplearning.ai)
-*Convolutional Neural Networks (deeplearning.ai)
-*Sequence Models (deeplearning.ai)
+- *Programming Languages: Part A (UW)
+- *Programming Languages: Part B (UW)
+- *Programming Languages: Part C (UW)
+- Introduction to Functional Programming with Haskell (Glasgow)
+- *Functional Programming in Scala (EPFL)
+- *Functional Program Design (EPFL)
+- *Parallel Programming (EPFL)
+- *Big Data and Spark (EPFL)
+- *Functional Programming with Scala Capstone (EPFL)
+- Paradigms of Computer Programming: the Fundamentals (Louvain)
+- Paradigms of Computer Programming: Concurrency (Louvain)
 
-###### Data Science:
-*Introduction to Apache Spark (Berkeley)
-*Big Data Analysis with Apache Spark (Berkeley)
-*Distributed Machine Learning with Apache Spark (Berkeley)
-Processing Big Data with Hadoop Azure HDInsight (Microsoft)
-Implementing Predictive Analytis with Spark in Azure HDInsight (Microsoft)
-Implementing Real-Time Analytics with Hadoop in Azure HDInsight (Microsoft)
+###### Machine Learning
+
+-*Statistical Learning (Stanford)
+-*Machine Learning (Stanford)
+-*Machine Learning: Foundations (UW)
+-*Machine Learning: Regression (UW)
+-*Machine Learning: Classification (UW)
+-*Machine Learning: Clustering and Retrieval (UW)
+-*Learning From Data: Introductory Machine Learning Course (CalTech)
+-Principles of Machine Learning (Microsoft)
+-Applied Machine Learning (Microsoft)  TO BE FINISHED
+-Practical Predictive Analysis (UW)
+-*Neural Networks and Deep Learning (deeplearning.ai)
+-*Improving Deep Neural Networks: Hyperparameter tuning, Regularization and Optimization -(deeplearning.ai)
+-*Structuring Machine Learning Projects (deeplearning.ai)
+-*Convolutional Neural Networks (deeplearning.ai)
+-*Sequence Models (deeplearning.ai)
+
+###### Data Science
+
+- *Introduction to Apache Spark (Berkeley)
+- *Big Data Analysis with Apache Spark (Berkeley)
+- *Distributed Machine Learning with Apache Spark (Berkeley)
+- Processing Big Data with Hadoop Azure HDInsight (Microsoft)
+- Implementing Predictive Analytis with Spark in Azure HDInsight (Microsoft)
+- Implementing Real-Time Analytics with Hadoop in Azure HDInsight (Microsoft)
 
 ###### Cloud Technologies
-Introduction to Cloud Infrastructure and Technologies (Linux Foundation)
-Big Data for Smart Cities (IEEE)
-Introduction to Microsoft Azure (Microsoft)
-Introduction to Kubernetes (LF158 Linux Foundation) 
-*Introduction to Kubernetes (LF258 Linux Foundation)
-Introduction to DevOps (Linux Foundation)
-Introduction to OpenStack (Linux Foundation)
-Introduction to CloudFoundry and Cloud Native Software Architecture
-Fundamentals of Containers, Kubernetes, and Open Shift (RedHatX)
-Apache Spark on AWS TO BE FINISHED
 
-###### Entrepreneurship:
-*User Innovation: A Path to Entrepreneurship (MITx)
-*Entrepreneurship 101: Who are your clients? (MITx)
+- Introduction to Cloud Infrastructure and Technologies (Linux Foundation)
+- Big Data for Smart Cities (IEEE)
+- Introduction to Microsoft Azure (Microsoft)
+- Introduction to Kubernetes (LF158 Linux Foundation) 
+- *Introduction to Kubernetes (LF258 Linux Foundation)
+- Introduction to DevOps (Linux Foundation)
+- Introduction to OpenStack (Linux Foundation)
+- Introduction to CloudFoundry and Cloud Native Software Architecture
+- Fundamentals of Containers, Kubernetes, and Open Shift (RedHatX)
+- Apache Spark on AWS TO BE FINISHED
+
+###### Entrepreneurship
+
+- *User Innovation: A Path to Entrepreneurship (MITx)
+- *Entrepreneurship 101: Who are your clients? (MITx)
 
 ###### Other:
-*The Internet of Things course with MIT Professional Education (MITx)
-Practical Learning Analytics  (Michigan)
-MongoDB 101: MongoDB with Python (Mongo University)
-MongoDB and Apache Spark (Mongo University)
-*Research Data Management and Sharing (Edinburgh)
-Learning How to Learn  (UC San Diego)
+
+- *The Internet of Things course with MIT Professional Education (MITx)
+- Practical Learning Analytics  (Michigan)
+- MongoDB 101: MongoDB with Python (Mongo University)
+- MongoDB and Apache Spark (Mongo University)
+- *Research Data Management and Sharing (Edinburgh)
+- Learning How to Learn  (UC San Diego)
