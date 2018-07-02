@@ -1,0 +1,92 @@
+---
+title: "Descriptive Statistics for the Reading-Writing Paper"
+output:
+  html_document: default
+  html_notebook: default
+---
+
+#### Description of Samples
+
+```{r Sample_Descriptive}
+source("Common.R")
+require(Gmisc, quietly = TRUE)
+require(Hmisc)
+require(dplyr)
+
+UDIO_DATASET_C$IEP <- factor(UDIO_DATASET_C$IEP,
+                             levels = c(1, 0),
+                             labels = c("IEP", "Non-IEP"))
+label(UDIO_DATASET_C$IEP) <- "IEP Status"
+
+UDIO_DATASET_C$ELL <- factor(UDIO_DATASET_C$IEP,
+                             levels = c(1, 0),
+                             labels = c("ELL", "Non-ELL"))
+label(UDIO_DATASET_C$ELL) <- "ELL Status"
+
+UDIO_DATASET_C$FARMS <- factor(UDIO_DATASET_C$FARMS,
+                             levels = c(1, 0),
+                             labels = c("Free/Reduced Lunch", "Non-Free/Reduced Lunch"))
+label(UDIO_DATASET_C$FARMS) <- "Socioeconomic Status"
+
+UDIO_DATASET_C$GRADE <- factor(UDIO_DATASET_C$GRADE,
+                             levels = c(6, 7, 8),
+                             labels = paste("Grade", as.character(6:8)))
+label(UDIO_DATASET_C$GRADE) <- "GRADE"
+
+mergeDesc(
+  list(getDescriptionStatsBy(UDIO_DATASET_C$IEP, UDIO_DATASET_C$GRADE, digits = 1, add_total_col = "last"),
+  getDescriptionStatsBy(UDIO_DATASET_C$ELL, UDIO_DATASET_C$GRADE, digits = 1, add_total_col = "last"),
+  getDescriptionStatsBy(UDIO_DATASET_C$FARMS, UDIO_DATASET_C$GRADE, digits = 1, add_total_col = "last"))
+)
+
+
+```
+
+
+```{r}
+require(dplyr)
+nrow(UDIO_DATASET_C)
+
+UDIO_DATASET_C %>%
+  select(ID, GRADE, IEP) %>%
+  group_by(GRADE) %>%
+  summarize(n = n())
+
+UDIO_DATASET_C %>%
+  select(ID, GRADE, IEP) %>%
+  group_by(IEP) %>%
+  summarize(n = n())
+
+UDIO_DATASET_C %>%
+  select(ID, GRADE, ELL) %>%
+  group_by(ELL) %>%
+  summarize(n = n())
+
+UDIO_DATASET_C %>%
+  select(ID, GRADE, FARMS) %>%
+  group_by(FARMS) %>%
+  summarize(n = n())
+```
+
+```{r}
+require(dplyr)
+UDIO_DATASET_C %>%
+  select(ID, GRADE, IEP) %>%
+  group_by(GRADE, IEP) %>%
+  summarize(n = n())
+
+UDIO_DATASET_C %>%
+  select(ID, GRADE, ELL) %>%
+  group_by(GRADE, ELL) %>%
+  summarize(n = n())
+
+UDIO_DATASET_C %>%
+  select(ID, GRADE, FARMS) %>%
+  group_by(GRADE, FARMS) %>%
+  summarize(n = n())
+
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file).

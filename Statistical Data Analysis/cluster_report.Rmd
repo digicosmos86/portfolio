@@ -1,0 +1,190 @@
+---
+title: "Clustering Analysis"
+author: "Paul Xu"
+date: "10/10/2016"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+source("Common.R")
+wc <- read.csv("word_count_1.csv", stringsAsFactors = FALSE)
+convert_month <- c(
+  "October" = "Month1",
+  "November" = "Month2",
+  "December" = "Month3",
+  "January" = "Month4",
+  "February" = "Month5",
+  "March" = "Month6",
+  "April" = "Month7",
+  "May" = "Month8",
+  "June" = "Month9"
+)
+
+new_levels <- c("High and Consistent Use", "Low Use", "High and Inconsistent Use")
+names(new_levels) <- c(1,2,3)
+new_levels[UDIO_DATASET_CLUSTER$member]
+
+wc$m <- convert_month[wc$Month.of.Start.time]
+
+wc_wide <- wc %>%
+  select(Subjectid, Wordcount, m) %>%
+  spread(m, Wordcount, fill = 0) %>%
+  select(-Month1 , -Month9) %>%
+  rename(ID=Subjectid) %>%
+  mutate(ID = factor(ID))
+
+wc_matrix <- as.matrix(wc_wide %>% select(Month2:Month8))
+wc_wide1 <- select(wc_wide, Month2:Month8)
+
+heatmap_fun <- function (matrix, main = NA) {
+  heatmap(matrix, Colv = NA, distfun = function(x) { compute_new_distance(x, FALSE, TRUE)}, scale = "none", symm = FALSE, zlim = c(0,8000), labRow = NA, labCol = c('Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May'), main = main)
+}
+```
+
+### Part 1. Research Description
+
+The goal of this study is to measure the consistency in the students' use of the Udio Text-to-speech functionality, and distinguish students who used TTS consistenty, towards the beginning of the academic year, and sparsely.  To achieve this, we generated a dataset of 312 students from the Full Udio condition only that describes the number of total words read using TTS each month.  It is also possible to aggregate at the week level, but Udio use at any specific week could be impacted by snow days, state-standadized tests, and other unforeseeable reason that students cannot control.  Aggregating at the month level could negate some of these impact.  We also dropped the months of September 2015 and July 2016, because the Udio study did not start or end at the same time for all schools.  This process resulted each student having seven data points from October 2015 to May 2016.
+
+The following plot describes the distribution of total number of words read using TTS each of the seven months.
+
+```{r distribution, fig.height = 6, echo=FALSE}
+par(mfrow = c(3,3))
+hists1 = lapply(wc_wide1, function(x) {
+  y = hist(x, breaks = 100, col = "red", main = NA, xlab = NA, ylab = "Count")
+})
+par(mfrow = c(1,1))
+```
+
+The plot shows that this is a noisy dataset. The distributions roughly follows geometric distributions but with long tails showing numerous outliers, i.e. in some rare cases the student had over 15,000 words read with TTS, which could be errors in the measurement.  To minimize the influece of these noisy measurement, we applied log-transformation on the dataset.  The resulting dataset approximates a multivariate normal distribution, which will be more appropriate for the following clustering analysis.  The distributions after transformation looks like the following:
+
+```{r distribution_log, fig.height = 6, echo=FALSE}
+par(mfrow = c(3,3))
+hists1 = lapply(wc_wide1, function(x) {
+  y = hist(log(x+1), breaks = 100, col = "red", main = NA, ylab = "Count")
+})
+par(mfrow = c(1,1))
+```
+
+### Part 2. Defintion of Similarity
+
+The next step is to determine the "similarity" between each student.  Here we decided to use the "weighted euclidean distance" to measure the differences, or distance, between the activities of two students.  For each student, we view the total words read using TTS each month from October 2015 to May 2016 as a length 7 vector.  The euclidean distance is the square root of the sum of square differences of each element:
+
+$$ dist(\mathbf{x}, \mathbf{y}) = \sqrt{\sum_{i=1}^{n}(y_i-x_i)^2} $$
+
+However, the euclidean distance does not distinguish earlier uses of TTS from later ones.  In order to account for the consistency of the use of TTS, we apply a weight to the difference of each element of the two vectors:
+
+$$ dist_w(\mathbf{x}, \mathbf{y}) = \sqrt{\sum_{i=1}^{n}w_i(y_i-x_i)^2} $$
+
+We applied smaller weights for the first a few months, and increased the weights incrementally towards the end of the seven months.  We also applied a small weight to the month of May 2016 to downlplay the importance of measurements from this month, because they are particularly noisy due to standardized tests and some schools closing early.  Accounting for the log-transformation applied above, the final distance measure that we uses is as follows (a constant 1 is added to each measurement to avoid getting -infinity from the logarithm of 0 in some cases):
+
+$$ dist_w(\mathbf{x}, \mathbf{y}) = \sqrt{\sum_{i=1}^{n}w_i(log(y_i+1)-log(x_i+1))^2} $$
+
+### Part 3. Hierarchical Agglomerative Clustering
+
+Having defined the distance measures, we used Hierarchical Agglomerative Clustering to cluster different usage patterns together and visualized this process using a heatmap with a dendrogram:
+
+```{r heatmap_1, echo=F}
+compute_new_distance <- function(x, suppressLast = FALSE, log = TRUE) {
+  from <- 0.5
+  to <- 2.0
+  if (suppressLast) {
+    weights = c(seq(from=from, to=to, length.out=ncol(x)-1), from)
+  } else {
+    weights = seq(from, to, length.out=ncol(x))
+  }
+  if (log) 
+    x <- log(x+1)
+  dist(x*(weights^0.5), method = "euclidean")
+}
+
+heatmap_fun(wc_matrix)
+```
+
+The algorithm performed well and returned three distinct groups:
+
+Group 1: students in this group showed consistently high levels of activities.
+
+```{r group1, echo=F, warning=F}
+cluster1 <- hclust(compute_new_distance(wc_matrix, FALSE, TRUE))
+#plot(cluster1)
+wc_wide$member <- cutree(cluster1, 4)
+wc_wide$member[wc_wide$member == 3] = 2
+wc_wide$member[wc_wide$member == 4] = 3
+heatmap_fun(wc_matrix[wc_wide$member == 1,], main="Group 1")
+UDIO_DATASET_CLUSTER <- left_join(wc_wide, UDIO_DATASET_ANALYTIC, by = "ID")
+```
+
+Group 2: students in this group showed no, sparse, or inconsistent use of the TTS funcitonality.
+
+```{r group2, echo=F}
+heatmap_fun(wc_matrix[wc_wide$member == 2,], main="Group 2")
+```
+
+Group 3: This group of students' usage of TTS lies between groups 1 and 2.  Some students showed little or no usage, which are close to those in Group 1, some students' usage looks more like Group 3.
+
+```{r group3, echo=F}
+heatmap_fun(wc_matrix[wc_wide$member == 3,], main="Group 3")
+```
+
+```{r group4, echo=F, include = FALSE}
+#heatmap_fun(wc_matrix[wc_wide$member == 4,], main="Group 4")
+```
+
+There are more IEP students in Groups 1 and 3, while non-IEP students are the majority in Group 2
+
+```{r iep}
+table(UDIO_DATASET_CLUSTER$IEP, UDIO_DATASET_CLUSTER$member)
+```
+
+### Part 4. Different Pre-Post Performances on QRI, by clusters
+
+The most interesting finding is that the IEP students in Group 3 showed the most growth in Pre-Post performance on QRI.  Considering QRI is designed to closely resemble reading in Udio, this finding shows that IEP students who consistently used TTS to read in Udio throughout the academic year showed the most significant growth in listening comprehension i.e. when the texts are read to them.
+
+```{r qri1, echo=FALSE}
+plot_df <- UDIO_DATASET_CLUSTER %>%
+  select(ID, CLASS_ID, IEP, member, PRE_QRI_PCT, POST_QRI_PCT) %>%
+  gather(TIME, SCORE, PRE_QRI_PCT, POST_QRI_PCT) %>%
+  mutate(TIME = gsub("_QRI_PCT", "", TIME)) %>%
+  mutate(TIME = factor(TIME, levels = c("PRE", "POST")), ID=as.factor(ID)) %>%
+  mutate(member = new_levels[member]) %>%
+  mutate(member = factor(member, levels = new_levels[c(2,3,1)]))
+
+ggplot(plot_df, aes(TIME, SCORE, group = IEP)) + geom_line(stat="summary", fun.y = "mean", aes(linetype = IEP)) + facet_grid(~member) + ylab("Mean Score") + xlab(NULL)
+```
+
+A more detailed look at the prepost difference broken down by student.  It seems that the growth in the IEP group of Cluster 1 is fairly robust, despite one students' scores dropping from about 60% to 0%.
+
+```{r qri2, echo=FALSE}
+plot_df <- UDIO_DATASET_CLUSTER %>%
+  select(ID, CLASS_ID, IEP, FARMS, member, PRE_QRI_PCT, POST_QRI_PCT) %>%
+  gather(TIME, SCORE, PRE_QRI_PCT, POST_QRI_PCT) %>%
+  mutate(TIME = factor(TIME, levels = c("PRE_QRI_PCT", "POST_QRI_PCT")), ID=as.factor(ID))
+
+ggplot(plot_df, aes(TIME, SCORE, group = ID, color = CLASS_ID)) + geom_line(stat="identity") + facet_grid(IEP~member) + ggtitle("Difference in Average QRI Score by IEP Status and Cluster") + ylab("Score in QRI")
+
+ggplot(plot_df, aes(TIME, SCORE, group = ID, color = FARMS)) + geom_line(stat="summary", fun.y = "mean") + facet_grid(IEP~member) + ggtitle("Difference in Average QRI Score by IEP Status and Cluster") + ylab("Score in QRI")
+```
+
+
+```{r rapid1, echo=FALSE}
+plot_df1 <- UDIO_DATASET_CLUSTER %>%
+  select(ID, CLASS_ID, IEP, member, PRE_RAPID_RC_AB, POST_RAPID_RC_AB) %>%
+  gather(TIME, SCORE, PRE_RAPID_RC_AB, POST_RAPID_RC_AB) %>%
+  mutate(TIME = factor(TIME, levels = c("PRE_RAPID_RC_AB", "POST_RAPID_RC_AB")), ID=as.factor(ID))
+
+ggplot(plot_df1, aes(TIME, SCORE, group = member)) + geom_line(stat="summary", fun.y = "mean") + facet_grid(IEP~member) + ggtitle("Difference in Reading Comprehension Score by IEP Status and Cluster") + ylab("Mean Score in QRI")
+
+ggplot(plot_df1, aes(TIME, SCORE, group = ID, color = CLASS_ID)) + geom_line(stat="summary", fun.y = "mean") + facet_grid(IEP~member) + ggtitle("Difference in Reading Comprehension Score by IEP Status and Cluster") + ylab("Mean Score in QRI")
+```
+
+```{r wr1, echo=FALSE}
+plot_df2 <- UDIO_DATASET_CLUSTER %>%
+  select(ID, CLASS_ID, IEP, member, PRE_RAPID_WR_AB, POST_RAPID_WR_AB) %>%
+  gather(TIME, SCORE, PRE_RAPID_WR_AB, POST_RAPID_WR_AB) %>%
+  mutate(TIME = factor(TIME, levels = c("PRE_RAPID_WR_AB", "POST_RAPID_WR_AB")), ID=as.factor(ID))
+
+ggplot(plot_df2, aes(TIME, SCORE, group = member)) + geom_line(stat="summary", fun.y = "mean") + facet_grid(IEP~member) + ggtitle("Difference in Average Word Recognition Score by IEP Status and Cluster") + ylab("Mean Score in QRI")
+
+ggplot(plot_df2, aes(TIME, SCORE, group = ID, color = CLASS_ID)) + geom_line(stat="summary", fun.y = "mean") + facet_grid(IEP~member) + ggtitle("Difference in Word Recognition Score by IEP Status and Cluster") + ylab("Mean Score in QRI")
+```

@@ -1,0 +1,197 @@
+---
+output: pdf_document
+---
+
+```{r setup, include=FALSE, echo=FALSE}
+source("Common.R")
+library("stargazer")
+library("sjPlot")
+
+# hist(UDIO_DATASET_C$PRE_RAPID_WR_AB, breaks = 50, xlim=c(0, 1000))
+# hist(UDIO_DATASET_C$POST_RAPID_WR_AB, breaks = 50, xlim=c(0, 1000))
+# hist(UDIO_DATASET_C$PRE_RAPID_VK_AB, breaks = 50, xlim=c(0, 1000))
+# hist(UDIO_DATASET_C$POST_RAPID_VK_AB, breaks = 50, xlim=c(0, 1000))
+# hist(UDIO_DATASET_C$PRE_RAPID_SK_AB, breaks = 50, xlim=c(0, 1000))
+# hist(UDIO_DATASET_C$POST_RAPID_SK_AB, breaks = 50, xlim=c(0, 1000))
+# hist(UDIO_DATASET_C$PRE_RAPID_RC_AB, breaks = 50, xlim=c(0, 1000))
+# hist(UDIO_DATASET_C$POST_RAPID_RC_AB, breaks = 50, xlim=c(0, 1000))
+# hist(UDIO_DATASET_C$POST_WIAT_SS)
+
+#View(UDIO_DATASET_C[UDIO_DATASET_C$POST_RAPID_SK_AB == 1000,])
+#UDIO_DATASET_Cleaned <- filter(UDIO_DATASET_C, PRE_RAPID_WR_AB != 0, POST_RAPID_WR_AB != 0, POST_RAPID_SK_AB != 0)
+```
+
+```{r descriptives, include = FALSE}
+### Generate descriptive tables and output to CSV files
+
+descriptive_raw <- select(UDIO_DATASET_C, IEP, ELL, FARMS, contains("AB"), contains("SS"), -contains("_C"), -contains("_N"), -CLASS_ID, -discuss, KEY_COUNT)
+
+descriptive_raw %>%
+  select(-IEP, -ELL, -FARMS) %>%
+  summarise_all(funs(n = sum(!is.na(.)), mean_sd = mean_sd(.))) %>%
+  select(unlist(matrix(1:(2*13), nrow = 2, byrow = TRUE))) %>%
+  write.csv("SSSR_ALL.csv", row.names = FALSE)
+
+descriptive_raw %>%
+  select(-ELL, -FARMS) %>%
+  group_by(IEP) %>%
+  summarise_all(funs(n = sum(!is.na(.)), mean_sd = mean_sd(.))) %>%
+  select(c(1, 1+unlist(matrix(1:(2*13), nrow = 2, byrow = TRUE)))) %>%
+  write.csv("SSSR_IEP.csv", row.names = FALSE)
+
+descriptive_raw %>%
+  select(-IEP, -FARMS) %>%
+  group_by(ELL) %>%
+  summarise_all(funs(n = sum(!is.na(.)), mean_sd = mean_sd(.))) %>%
+  select(c(1, 1+unlist(matrix(1:(2*13), nrow = 2, byrow = TRUE)))) %>%
+  write.csv("SSSR_ELL.csv", row.names = FALSE)
+
+descriptive_raw %>%
+  select(-ELL, -IEP) %>%
+  group_by(FARMS) %>%
+  summarise_all(funs(n = sum(!is.na(.)), mean_sd = mean_sd(.))) %>%
+  select(c(1, 1+unlist(matrix(1:(2*13), nrow = 2, byrow = TRUE)))) %>%
+  write.csv("SSSR_FARMS.csv", row.names = FALSE)
+
+descriptive_raw %>%
+  select(PRE_RAPID_RC_AB, POST_RAPID_RC_AB, PRE_WIAT_SS, POST_WIAT_SS, PRE_RAPID_WR_AB, PRE_RAPID_VK_AB, PRE_RAPID_SK_AB, PRE_WORDS_SS, KEY_COUNT) %>%
+  sjt.corr(corr.method = "pearson", na.deletion = "pairwise", title = "Correlation Table", file = "corr.table.html",
+           var.labels = c("Reading Comprehension (Pre)", "Reading Comprehension (Post)", "WIAT Organization (Pre)", "WIAT Organization (Post)", "Orthographic Knowledge", "Vocabulary Knowledge", "Syntactic Knowledge", "WIAT Word Count", "Keyboarding"),
+           triangle = "lower")
+```
+
+
+```{r models, echo=FALSE, include = FALSE}
+sssr.uncond <- lmer(POST_RAPID_RC_AB ~ (1|CLASS_ID), data = UDIO_DATASET_C)
+summary(sssr.uncond)
+
+sssr.1 <- lmer(POST_RAPID_RC_AB ~ IEP + ELL + FARMS + GRADE + (1|CLASS_ID), data = UDIO_DATASET_C)
+summary(sssr.1)
+
+sssr.2 <- lmer(POST_RAPID_RC_AB ~ IEP + ELL + FARMS + GRADE + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+summary(sssr.2)
+
+sssr.3 <- lmer(POST_RAPID_RC_AB ~ IEP + ELL + FARMS + GRADE + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_WIAT_SS_C+ (1|CLASS_ID), data = UDIO_DATASET_C)
+summary(sssr.3)
+
+sssr.4 <- lmer(POST_RAPID_RC_AB ~ IEP + ELL + FARMS + GRADE + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_WIAT_SS_C + PRE_WIAT_SS_C:GRADE + (1|CLASS_ID), data = UDIO_DATASET_C)
+summary(sssr.4)
+
+sssrw.uncond <- lmer(POST_WIAT_SS ~ (1|CLASS_ID), data = UDIO_DATASET_C)
+summary(sssrw.uncond)
+
+sssrw.1 <- lmer(POST_WIAT_SS ~ IEP + ELL + FARMS + GRADE + (1|CLASS_ID), data = UDIO_DATASET_C)
+summary(sssrw.1)
+
+sssrw.2 <- lmer(POST_WIAT_SS ~ IEP + ELL + FARMS + GRADE + PRE_WORDS_SS_C + KEY_COUNT_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+summary(sssrw.2)
+
+sssrw.3 <- lmer(POST_WIAT_SS ~ IEP + ELL + FARMS + GRADE + PRE_WORDS_SS_C + KEY_COUNT_C + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+summary(sssrw.3)
+
+sssrw.4 <- lmer(POST_WIAT_SS ~ IEP + ELL + FARMS + GRADE + PRE_WORDS_SS_C + KEY_COUNT_C + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_RAPID_RC_AB_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+summary(sssrw.4)
+```
+
+```{r pre_only, echo=FALSE, include = FALSE}
+# sssr.uncond.pre <- lmer(PRE_RAPID_RC_AB ~ (1|CLASS_ID), data = UDIO_DATASET_Cleaned)
+# summary(sssr.uncond.pre)
+# 
+# sssr.1.pre <- lmer(PRE_RAPID_RC_AB ~ IEP + ELL + FARMS + (1|CLASS_ID), data = UDIO_DATASET_Cleaned)
+# summary(sssr.1.pre)
+# 
+# sssr.2.pre <- lmer(PRE_RAPID_RC_AB ~ IEP + ELL + FARMS + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + (1|CLASS_ID), data = UDIO_DATASET_Cleaned)
+# summary(sssr.2.pre)
+# 
+# sssr.3.pre <- lmer(PRE_RAPID_RC_AB ~ IEP + ELL + FARMS + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_WORDS_SS_C + PRE_WIAT_SS_C + (1|CLASS_ID), data = UDIO_DATASET_Cleaned)
+# summary(sssr.3.pre)
+# 
+# sssrw.uncond.pre <- lmer(PRE_WIAT_SS ~ (1|CLASS_ID), data = UDIO_DATASET_Cleaned)
+# summary(sssrw.uncond.pre)
+# 
+# sssrw.1.pre <- lmer(PRE_WIAT_SS ~ IEP + ELL + FARMS + (1|CLASS_ID), data = UDIO_DATASET_Cleaned)
+# summary(sssrw.1.pre)
+# 
+# sssrw.2.pre <- lmer(PRE_WIAT_SS ~ IEP + ELL + FARMS + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_RAPID_RC_AB_C + (1|CLASS_ID), data = UDIO_DATASET_Cleaned)
+# summary(sssrw.2.pre)
+# 
+# sssrw.3.pre <- lmer(PRE_WIAT_SS ~ IEP + ELL + FARMS + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_RAPID_RC_AB_C + PRE_WORDS_SS_C + (1|CLASS_ID), data = UDIO_DATASET_Cleaned)
+# summary(sssrw.3.pre)
+```
+
+
+```{r post_only, echo=FALSE, include = FALSE}
+# sssr.uncond.post <- lmer(POST_RAPID_RC_AB ~ (1|CLASS_ID), data = UDIO_DATASET_Cleaned)
+# summary(sssr.uncond.post)
+# 
+# sssr.1.post <- lmer(POST_RAPID_RC_AB ~ IEP + ELL + FARMS + (1|CLASS_ID), data = UDIO_DATASET_Cleaned)
+# summary(sssr.1.post)
+# 
+# sssr.2.post <- lmer(POST_RAPID_RC_AB ~ IEP + ELL + FARMS + POST_RAPID_WR_AB_C + POST_RAPID_VK_AB_C + POST_RAPID_SK_AB_C + (1|CLASS_ID), data = UDIO_DATASET_Cleaned)
+# summary(sssr.2.post)
+# 
+# sssr.3.post <- lmer(POST_RAPID_RC_AB ~ IEP + ELL + FARMS + POST_RAPID_WR_AB_C + POST_RAPID_VK_AB_C + POST_RAPID_SK_AB_C + POST_WORDS_SS_C + POST_WIAT_SS_C + (1|CLASS_ID), data = UDIO_DATASET_Cleaned)
+# summary(sssr.3.post)
+# 
+# sssrw.uncond.post <- lmer(POST_WIAT_SS ~ (1|CLASS_ID), data = UDIO_DATASET_Cleaned)
+# summary(sssrw.uncond.post)
+# 
+# sssrw.1.post <- lmer(POST_WIAT_SS ~ IEP + ELL + FARMS + (1|CLASS_ID), data = UDIO_DATASET_Cleaned)
+# summary(sssrw.1.post)
+# 
+# sssrw.2.post <- lmer(POST_WIAT_SS ~ IEP + ELL + FARMS + POST_RAPID_WR_AB_C + POST_RAPID_VK_AB_C + POST_RAPID_SK_AB_C + POST_RAPID_RC_AB_C + (1|CLASS_ID), data = UDIO_DATASET_Cleaned)
+# summary(sssrw.2.post)
+# 
+# sssrw.3.post <- lmer(POST_WIAT_SS ~ IEP + ELL + FARMS + POST_RAPID_WR_AB_C + POST_RAPID_VK_AB_C + POST_RAPID_SK_AB_C + POST_RAPID_RC_AB_C + POST_WORDS_SS_C + (1|CLASS_ID), data = UDIO_DATASET_Cleaned)
+# summary(sssrw.3.post)
+```
+
+```{r cross_model_table, results = "asis", echo=FALSE}
+cross.models.reading = list(sssr.uncond, sssr.1, sssr.2, sssr.3, sssr.4)
+stargazer(cross.models.reading, title = "HLM Results for Reading Comprehension (Post-on-Pre)",
+          dep.var.labels = "Reading Comp. (Post)",
+          covariate.labels = c("Intercept", "IEP Status", "ELL Status", "Free/Reduced Lunch", "Grade 7", "Grade 8", "Orthographic Know. (Pre)", "Voc. Know. (Pre)", "Syn. Know. (Pre)", "WIAT Organization", "Grade 7 x Organization", "Grade 8 x Organization"),
+          header = F, type = "latex", intercept.bottom = FALSE,
+          add.lines = varComp(cross.models.reading, length(cross.models.reading)), notes = "Predictors are grand-mean centered", notes.append = TRUE,
+          table.placement = "h!", star.cutoffs = c(0.05, 0.01, 0.001))
+
+cross.models.writing = list(sssrw.uncond, sssrw.1, sssrw.2, sssrw.3, sssrw.4)
+stargazer(cross.models.writing, title = "HLM Results for Writing (Post-on-Pre)",
+          dep.var.labels = "WIAT Theme Development and Organization (Post)",
+          covariate.labels = c("Intercept", "IEP Status", "ELL Status", "Free/Reduced Lunch", "Grade 7", "Grade 8", "WIAT Word Count", "Keyboarding", "Orthographic Know. (Pre)", "Voc. Know. (Pre)", "Syn. Know. (Pre)", "Reading Comp. (Pre)"),
+          header = F, type = "latex", intercept.bottom = FALSE,
+          add.lines = varComp(cross.models.writing, length(cross.models.writing)), notes = "Predictors are grand-mean centered", notes.append = TRUE,
+          table.placement = "h!", star.cutoffs = c(0.05, 0.01, 0.001))
+
+# pre.models.reading = list(sssr.uncond.pre, sssr.1.pre, sssr.2.pre, sssr.3.pre)
+# stargazer(pre.models.reading, title = "HLM Results for Reading Comprehension (Pre-only)",
+#           dep.var.labels = "Reading Comp. (Pre)",
+#           covariate.labels = c("Intercept", "IEP Status", "ELL Status", "Free/Reduced Lunch", "Word Recog. (Pre)", "Voc. Know. (Pre)", "Syn. Know. (Pre)", "WIAT Conventions (Pre)", "WIAT Writing (Pre)"),
+#           header = F, type = "latex", intercept.bottom = FALSE,
+#           add.lines = varComp(pre.models.reading, length(pre.models.reading)), notes = "Predictors are grand-mean centered", notes.append = TRUE,
+#           table.placement = "h!", star.cutoffs = c(0.05, 0.01, 0.001))
+# 
+# pre.models.writing = list(sssrw.uncond.pre, sssrw.1.pre, sssrw.2.pre, sssrw.3.pre)
+# stargazer(pre.models.writing, title = "HLM Results for Writing (Pre-only)",
+#           dep.var.labels = "WIAT Writing (Pre)",
+#           covariate.labels = c("Intercept", "IEP Status", "ELL Status", "Free/Reduced Lunch", "Word Recog. (Pre)", "Voc. Know. (Pre)", "Syn. Know. (Pre)", "Reading Comp. (Pre)", "WIAT Conventions (Pre)"),
+#           header = F, type = "latex", intercept.bottom = FALSE,
+#           add.lines = varComp(pre.models.writing, length(pre.models.writing)), notes = "Predictors are grand-mean centered", notes.append = TRUE,
+#           table.placement = "h!", star.cutoffs = c(0.05, 0.01, 0.001))
+# 
+# post.models.reading = list(sssr.uncond.post, sssr.1.post, sssr.2.post, sssr.3.post)
+# stargazer(post.models.reading, title = "HLM Results for Reading Composthension (Post-only)",
+#           dep.var.labels = "Reading Comp. (Post)",
+#           covariate.labels = c("Intercept", "IEP Status", "ELL Status", "Free/Reduced Lunch", "Word Recog. (Post)", "Voc. Know. (Post)", "Syn. Know. (Post)", "WIAT Conventions (Post)", "WIAT Writing (Post)"),
+#           header = F, type = "latex", intercept.bottom = FALSE,
+#           add.lines = varComp(post.models.reading, length(post.models.reading)), notes = "Predictors are grand-mean centered", notes.append = TRUE,
+#           table.placement = "h!", star.cutoffs = c(0.05, 0.01, 0.001))
+# 
+# post.models.writing = list(sssrw.uncond.post, sssrw.1.post, sssrw.2.post, sssrw.3.post)
+# stargazer(post.models.writing, title = "HLM Results for Writing (Post-only)",
+#           dep.var.labels = "WIAT Writing (Post)",
+#           covariate.labels = c("Intercept", "IEP Status", "ELL Status", "Free/Reduced Lunch", "Word Recog. (Post)", "Voc. Know. (Post)", "Syn. Know. (Post)", "Reading Comp. (Post)", "WIAT Conventions (Post)"),
+#           header = F, type = "latex", intercept.bottom = FALSE,
+#           add.lines = varComp(post.models.writing, length(post.models.writing)), notes = "Pretdictors are grand-mean centered", notes.append = TRUE,
+#           table.placement = "h!", star.cutoffs = c(0.05, 0.01, 0.001))
+```

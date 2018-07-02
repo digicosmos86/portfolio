@@ -1,0 +1,203 @@
+---
+title: "HLM results for AAAL"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+source("common.R")
+library(lme4)
+library(stargazer)
+library(sjPlot)
+```
+
+```{r descriptives, echo=FALSE}
+### Generate descriptive tables and output to CSV files
+
+UDIO_DATASET_C <- as.data.frame(UDIO_DATASET_C)
+
+UDIO_DATASET_C$PRE_WIAT_COMP <- (UDIO_DATASET_C$PRE_WORDS_SS + UDIO_DATASET_C$PRE_WIAT_SS) / 2
+UDIO_DATASET_C$POST_WIAT_COMP <- (UDIO_DATASET_C$POST_WORDS_SS + UDIO_DATASET_C$POST_WIAT_SS) / 2
+UDIO_DATASET_C$PRE_WIAT_COMP_C <- scale(UDIO_DATASET_C$PRE_WIAT_COMP, scale = FALSE)
+UDIO_DATASET_C$POST_WIAT_COMP_C <- scale(UDIO_DATASET_C$POST_WIAT_COMP, scale = FALSE)
+
+descriptive_raw_AAAL <- select(UDIO_DATASET_C, GRADE, IEP, ELL, FARMS, POST_RAPID_RC_AB, POST_WIAT_COMP, PRE_RAPID_WR_AB, PRE_RAPID_VK_AB, PRE_RAPID_SK_AB, KEY_COUNT)
+# 
+descriptive_raw_AAAL %>%
+  select(-IEP, -ELL, -FARMS, -GRADE) %>%
+  summarise_all(funs(n = sum(!is.na(.)), mean_sd = mean_sd(.))) %>%
+  select(unlist(matrix(1:(2*6), nrow = 2, byrow = TRUE))) %>%
+  write.csv("AAAL_ALL.csv", row.names = FALSE)
+# 
+descriptive_raw_AAAL %>%
+  select(-ELL, -FARMS, -GRADE) %>%
+  group_by(IEP) %>%
+  summarise_all(funs(n = sum(!is.na(.)), mean_sd = mean_sd(.))) %>%
+  select(c(1, 1+unlist(matrix(1:(2*6), nrow = 2, byrow = TRUE)))) %>%
+  write.csv("AAAL_IEP.csv", row.names = FALSE)
+# 
+descriptive_raw_AAAL %>%
+  select(-IEP, -FARMS, -GRADE) %>%
+  group_by(ELL) %>%
+  summarise_all(funs(n = sum(!is.na(.)), mean_sd = mean_sd(.))) %>%
+  select(c(1, 1+unlist(matrix(1:(2*6), nrow = 2, byrow = TRUE)))) %>%
+  write.csv("AAAL_ELL.csv", row.names = FALSE)
+# 
+descriptive_raw_AAAL %>%
+  select(-ELL, -IEP, -GRADE) %>%
+  group_by(FARMS) %>%
+  summarise_all(funs(n = sum(!is.na(.)), mean_sd = mean_sd(.))) %>%
+  select(c(1, 1+unlist(matrix(1:(2*6), nrow = 2, byrow = TRUE)))) %>%
+  write.csv("AAAL_FARMS.csv", row.names = FALSE)
+# 
+descriptive_raw_AAAL %>%
+  select(POST_RAPID_RC_AB, POST_WIAT_COMP, PRE_RAPID_WR_AB, PRE_RAPID_VK_AB, PRE_RAPID_SK_AB, KEY_COUNT) %>%
+  sjt.corr(corr.method = "pearson", na.deletion = "pairwise", title = "Correlation Tables", file = "corr.table.aaal.html",
+           var.labels = c("Reading Comprehension", "WIAT Writing Composite", "Orthographic Knowledge", "Vocabulary Knowledge", "Syntactic Knowledge", "Keyboarding"),
+           triangle = "lower")
+
+summary(aov(POST_WIAT_COMP ~ IEP * ELL * FARMS, data = UDIO_DATASET_C))
+
+descriptive_raw_AAAL %>%
+  select(-ELL, -IEP, -FARMS) %>%
+  group_by(GRADE) %>%
+  summarise_all(funs(n = sum(!is.na(.)), mean_sd = mean_sd(.))) %>%
+  select(c(1, 1+unlist(matrix(1:(2*6), nrow = 2, byrow = TRUE)))) %>%
+  write.csv("AAAL_GRADE.csv", row.names = FALSE)
+
+descriptive_raw_AAAL %>%
+  filter(GRADE == "6") %>%
+  select(POST_RAPID_RC_AB, POST_WIAT_COMP, PRE_RAPID_WR_AB, PRE_RAPID_VK_AB, PRE_RAPID_SK_AB, KEY_COUNT) %>%
+  sjt.corr(corr.method = "pearson", na.deletion = "pairwise", title = "Correlation Tables", file = "corr.table.aaal6.html",
+           var.labels = c("Reading Comprehension", "WIAT Writing Composite", "Orthographic Knowledge", "Vocabulary Knowledge", "Syntactic Knowledge", "Keyboarding"),
+           triangle = "lower")
+
+descriptive_raw_AAAL %>%
+  filter(GRADE == "7") %>%
+  select(POST_RAPID_RC_AB, POST_WIAT_COMP, PRE_RAPID_WR_AB, PRE_RAPID_VK_AB, PRE_RAPID_SK_AB, KEY_COUNT) %>%
+  sjt.corr(corr.method = "pearson", na.deletion = "pairwise", title = "Correlation Tables", file = "corr.table.aaal7.html",
+           var.labels = c("Reading Comprehension", "WIAT Writing Composite", "Orthographic Knowledge", "Vocabulary Knowledge", "Syntactic Knowledge", "Keyboarding"),
+           triangle = "lower")
+
+descriptive_raw_AAAL %>%
+  filter(GRADE == "8") %>%
+  select(POST_RAPID_RC_AB, POST_WIAT_COMP, PRE_RAPID_WR_AB, PRE_RAPID_VK_AB, PRE_RAPID_SK_AB, KEY_COUNT) %>%
+  sjt.corr(corr.method = "pearson", na.deletion = "pairwise", title = "Correlation Tables", file = "corr.table.aaal8.html",
+           var.labels = c("Reading Comprehension", "WIAT Writing Composite", "Orthographic Knowledge", "Vocabulary Knowledge", "Syntactic Knowledge", "Keyboarding"),
+           triangle = "lower")
+
+```
+
+```{r cross_models, include=FALSE}
+############ Post-on-Pre Models #####################
+cross.model.1 <- lmer(POST_RAPID_RC_AB ~ (1|CLASS_ID), data = UDIO_DATASET_C)   ## Unconditional Model
+cross.model.1.1 <- lmer(POST_RAPID_RC_AB ~ GRADE + (1|CLASS_ID), data = UDIO_DATASET_C)
+lm.model.1 <- lm(POST_RAPID_RC_AB ~ 1, data = UDIO_DATASET_C)   ## Unconditional Model
+cross.model.2 <- lmer(POST_RAPID_RC_AB ~ GRADE + IEP + ELL + FARMS + (1|CLASS_ID), data = UDIO_DATASET_C) ## SES-only Model
+lm.model.2 <- lm(POST_RAPID_RC_AB ~ IEP + ELL + FARMS, data = UDIO_DATASET_C) ## SES-only Model
+cross.model.3 <- lmer(POST_RAPID_RC_AB ~ GRADE + IEP + ELL + FARMS + PRE_RAPID_WR_AB_C + (1|CLASS_ID), data = UDIO_DATASET_C) ## SES-only Model
+lm.model.3 <- lm(POST_RAPID_RC_AB ~ GRADE + IEP + ELL + FARMS + PRE_RAPID_WR_AB_C, data = UDIO_DATASET_C) ## SES-only Model
+cross.model.4 <- lmer(POST_RAPID_RC_AB ~ GRADE + IEP + ELL + FARMS + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C + (1|CLASS_ID), data = UDIO_DATASET_C) ## SES-only Model
+lm.model.4 <- lm(POST_RAPID_RC_AB ~ GRADE + IEP + ELL + FARMS + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C, data = UDIO_DATASET_C) ## SES-only Model
+cross.model.5 <- lmer(POST_RAPID_RC_AB ~ GRADE + IEP + ELL + FARMS + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + (1|CLASS_ID), data = UDIO_DATASET_C) ## SES-only Model
+lm.model.5 <- lm(POST_RAPID_RC_AB ~ GRADE + IEP + ELL + FARMS + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C, data = UDIO_DATASET_C) ## SES-only Model
+
+### Interaction Models with SK
+# cross.model.4 <- lmer(POST_RAPID_RC_AB ~ IEP + ELL + FARMS + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_RAPID_SK_AB_C:IEP + (1|CLASS_ID), data = UDIO_DATASET_Cleaned) ## SES-only Model
+# cross.model.5 <- lmer(POST_RAPID_RC_AB ~ IEP + ELL + FARMS + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_RAPID_SK_AB_C:ELL + (1|CLASS_ID), data = UDIO_DATASET_Cleaned) ## SES-only Model
+# cross.model.6 <- lmer(POST_RAPID_RC_AB ~ IEP + ELL + FARMS + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_RAPID_SK_AB_C:FARMS + (1|CLASS_ID), data = UDIO_DATASET_Cleaned) ## SES-only Model
+
+### Interaction Models with WR
+cross.model.7 <- lmer(POST_RAPID_RC_AB ~ IEP + ELL + FARMS + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_RAPID_WR_AB_C:IEP + (1|CLASS_ID), data = UDIO_DATASET_C) ## SES-only Model
+cross.model.8 <- lmer(POST_RAPID_RC_AB ~ IEP + ELL + FARMS + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_RAPID_WR_AB_C:ELL + (1|CLASS_ID), data = UDIO_DATASET_C) ## SES-only Model
+cross.model.9 <- lmer(POST_RAPID_RC_AB ~ IEP + ELL + FARMS + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_RAPID_WR_AB_C:FARMS + (1|CLASS_ID), data = UDIO_DATASET_C) ## SES-only Model
+
+### Interaction Models with VK
+cross.model.10 <- lmer(POST_RAPID_RC_AB ~ IEP + ELL + FARMS + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_RAPID_VK_AB_C:IEP + (1|CLASS_ID), data = UDIO_DATASET_C) ## SES-only Model
+cross.model.11 <- lmer(POST_RAPID_RC_AB ~ IEP + ELL + FARMS + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_RAPID_VK_AB_C:ELL + (1|CLASS_ID), data = UDIO_DATASET_C) ## SES-only Model
+cross.model.12 <- lmer(POST_RAPID_RC_AB ~ IEP + ELL + FARMS + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_RAPID_VK_AB_C:FARMS + (1|CLASS_ID), data = UDIO_DATASET_C) ## SES-only Model
+
+```
+
+```{r cross_model_table, results = "asis", echo=FALSE}
+cross.models = list(cross.model.1, cross.model.1.1, cross.model.2, cross.model.3, cross.model.4, cross.model.5)
+stargazer(cross.models, title = "HLM Results (Post-on-Pre)",
+          dep.var.labels = "Reading Comp. (Post)",
+          covariate.labels = c("Intercept", "Grade 7", "Grade 8", "IEP Status", "ELL Status", "Free/Reduced Lunch", "Word Recog. (Pre)", "Voc. Know. (Pre)", "Syn. Know. (Pre)"),
+          header = F, type = "html", intercept.bottom = FALSE,
+          add.lines = varComp(cross.models, length(cross.models)), notes = "Predictors are grand-mean centered", notes.append = TRUE,
+          table.placement = "h!", star.cutoffs = c(0.05, 0.01, 0.001))
+
+anova(cross.model.1, lm.model.1)
+anova(cross.model.2, lm.model.2)
+anova(cross.model.3, lm.model.3)
+anova(cross.model.4, lm.model.4)
+anova(cross.model.5, lm.model.5)
+```
+
+```{r cross_model_for_writing, include = FALSE}
+writing.model.1 <- lmer(POST_WIAT_COMP ~ (1|CLASS_ID), data = UDIO_DATASET_C)
+writing.model.2 <- lmer(POST_WIAT_COMP ~ KEY_COUNT + (1|CLASS_ID), data = UDIO_DATASET_C)
+writing.model.2.1 <- lmer(POST_WIAT_COMP ~ KEY_COUNT + GRADE + (1|CLASS_ID), data = UDIO_DATASET_C)
+writing.model.3 <- lmer(POST_WIAT_COMP ~ KEY_COUNT + GRADE + IEP + ELL + FARMS + (1|CLASS_ID), data = UDIO_DATASET_C)
+
+writing.model.4 <- lmer(POST_WIAT_COMP ~ KEY_COUNT + GRADE + IEP + ELL + FARMS + PRE_RAPID_WR_AB_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+writing.model.5 <- lmer(POST_WIAT_COMP ~ KEY_COUNT + GRADE + IEP + ELL + FARMS + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+writing.model.6 <- lmer(POST_WIAT_COMP ~ KEY_COUNT + GRADE + IEP + ELL + FARMS + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+
+writing.model.6.IEP.1 <- lmer(POST_WIAT_COMP ~ KEY_COUNT + GRADE + IEP + ELL + FARMS + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + IEP:PRE_RAPID_WR_AB_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+summary(writing.model.6.IEP.1)
+
+writing.model.6.IEP.2 <- lmer(POST_WIAT_COMP ~ KEY_COUNT + GRADE + IEP + ELL + FARMS + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + IEP:PRE_RAPID_VK_AB_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+summary(writing.model.6.IEP.2)
+
+writing.model.6.IEP.3 <- lmer(POST_WIAT_COMP ~ KEY_COUNT + GRADE + IEP + ELL + FARMS + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + IEP:PRE_RAPID_SK_AB_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+summary(writing.model.6.IEP.3)
+
+writing.model.6.ELL.1 <- lmer(POST_WIAT_COMP ~ KEY_COUNT + GRADE + IEP + ELL + FARMS + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + ELL:PRE_RAPID_WR_AB_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+summary(writing.model.6.ELL.1)
+
+writing.model.6.ELL.2 <- lmer(POST_WIAT_COMP ~ KEY_COUNT + GRADE + IEP + ELL + FARMS + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + ELL:PRE_RAPID_VK_AB_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+summary(writing.model.6.ELL.2) ### VK and ELL significant
+
+writing.model.6.ELL.3 <- lmer(POST_WIAT_COMP ~ KEY_COUNT + GRADE + IEP + ELL + FARMS + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + ELL:PRE_RAPID_SK_AB_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+summary(writing.model.6.ELL.3)
+
+writing.model.6.FARMS.1 <- lmer(POST_WIAT_COMP ~ KEY_COUNT + GRADE + IEP + ELL + FARMS + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + FARMS:PRE_RAPID_WR_AB_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+summary(writing.model.6.FARMS.1)
+
+writing.model.6.FARMS.2 <- lmer(POST_WIAT_COMP ~ KEY_COUNT + GRADE + IEP + ELL + FARMS + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + FARMS:PRE_RAPID_VK_AB_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+summary(writing.model.6.FARMS.2)
+
+writing.model.6.FARMS.3 <- lmer(POST_WIAT_COMP ~ KEY_COUNT + GRADE + IEP + ELL + FARMS + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + FARMS:PRE_RAPID_SK_AB_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+summary(writing.model.6.FARMS.3)
+
+
+```
+
+
+```{r writing_model_table, results = "asis", echo=FALSE}
+writing.models = list(writing.model.1, writing.model.2, writing.model.2.1, writing.model.3, writing.model.4, writing.model.5, writing.model.6, writing.model.6.ELL.2)
+stargazer(writing.models, title = "HLM Results for Writing (Post-on-Pre)",
+          dep.var.labels = "WIAT Writing Composite (Post)",
+          covariate.labels = c("Intercept", "Keyboarding", "Grade 7", "Grade 8", "IEP Status", "ELL Status", "Free/Reduced Lunch", "Orthographic Knowledge", "Vocabulary Knowledge", "Syntactic Knowledge"),
+          header = F, type = "html", intercept.bottom = FALSE,
+          add.lines = varComp(writing.models, length(writing.models)), notes = "Predictors are grand-mean centered", notes.append = TRUE,
+          table.placement = "h!", star.cutoffs = c(0.05, 0.01, 0.001))
+
+# anova(writing.model.1, lm.model.1)
+# anova(writing.model.2, lm.model.2)
+# anova(writing.model.3, lm.model.3)
+# anova(writing.model.4, lm.model.4)
+# anova(writing.model.5, lm.model.5)
+# anova(writing.model.5, lm.model.6)
+
+summary(aov(POST_RAPID_RC_AB ~ GRADE, data = UDIO_DATASET_C))
+summary(aov(POST_WIAT_COMP ~ GRADE, data = UDIO_DATASET_C))
+summary(aov(PRE_RAPID_WR_AB ~ GRADE, data = UDIO_DATASET_C))
+summary(aov(PRE_RAPID_SK_AB ~ GRADE, data = UDIO_DATASET_C))
+summary(aov(PRE_RAPID_VK_AB ~ GRADE, data = UDIO_DATASET_C))
+summary(aov(KEY_COUNT ~ GRADE, data = UDIO_DATASET_C))
+
+
+```

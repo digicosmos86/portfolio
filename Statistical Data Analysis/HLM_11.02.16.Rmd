@@ -1,0 +1,520 @@
+---
+title: "Udio HLM Results"
+output:
+  html_document: default
+  pdf_document: default
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+## Process and get data from common.R
+source("common.R")
+library(stargazer)
+UDIO_DATASET_C <- UDIO_DATASET_C[UDIO_DATASET_C$UDIO_CONDITION != "Supported",]
+UDIO_DATASET_C$DIFF_RC <- UDIO_DATASET_C$POST_RAPID_RC_AB - UDIO_DATASET_C$PRE_RAPID_RC_AB
+UDIO_DATASET_C$DIFF_WIAT <- UDIO_DATASET_C$POST_WIAT_SS - UDIO_DATASET_C$PRE_WIAT_SS
+UDIO_DATASET_C$DIFF_QRI <- UDIO_DATASET_C$POST_QRI_PCT - UDIO_DATASET_C$PRE_QRI_PCT
+UDIO_DATASET_C$DIFF_WR <- UDIO_DATASET_C$POST_RAPID_WR_AB - UDIO_DATASET_C$PRE_RAPID_WR_AB
+UDIO_DATASET_C$DIFF_SK <- UDIO_DATASET_C$POST_RAPID_SK_AB - UDIO_DATASET_C$PRE_RAPID_SK_AB
+UDIO_DATASET_C$DIFF_VK <- UDIO_DATASET_C$POST_RAPID_VK_AB - UDIO_DATASET_C$PRE_RAPID_VK_AB
+UDIO_DATASET_C$DIFF_MRQ <- UDIO_DATASET_C$POST_R_MRQ - UDIO_DATASET_C$PRE_R_MRQ
+UDIO_DATASET_F <- UDIO_DATASET_C[UDIO_DATASET_C$UDIO_CONDITION == "Full",]
+UDIO_DATASET_F$PRE_RAPID_RC_AB_C_Plus2SD <- 
+  UDIO_DATASET_F$PRE_RAPID_RC_AB_C - 2*sd(UDIO_DATASET_C$PRE_RAPID_RC_AB, na.rm =TRUE)
+UDIO_DATASET_F$PRE_RAPID_RC_AB_C_Plus1SD <- 
+  UDIO_DATASET_F$PRE_RAPID_RC_AB_C - sd(UDIO_DATASET_C$PRE_RAPID_RC_AB, na.rm =TRUE)
+
+UDIO_DATASET_F$PRE_RAPID_RC_AB_C_Minus1SD <- 
+  UDIO_DATASET_F$PRE_RAPID_RC_AB_C + sd(UDIO_DATASET_C$PRE_RAPID_RC_AB, na.rm =TRUE)
+UDIO_DATASET_F$PRE_RAPID_RC_AB_C_Minus2SD <- 
+  UDIO_DATASET_F$PRE_RAPID_RC_AB_C + 2*sd(UDIO_DATASET_C$PRE_RAPID_RC_AB, na.rm =TRUE)
+
+```
+
+#### Part 1. HLM Models based on RAPID Reading Comprehension
+##### Table 1. Predicting post outcome with post outcomes (all students)
+
+```{r rapid_rc, include=FALSE, echo=FALSE}
+rc.model.1 <- lmer(POST_RAPID_RC_AB ~ (1|CLASS_ID), data = UDIO_DATASET_C)
+rc.model.2 <- lmer(POST_RAPID_RC_AB ~ PRE_RAPID_RC_AB_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+rc.model.3 <- lmer(POST_RAPID_RC_AB ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + (1|CLASS_ID), data = UDIO_DATASET_C)
+rc.model.4 <- lmer(POST_RAPID_RC_AB ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + POST_RAPID_WR_AB_C + 
+                     POST_RAPID_VK_AB_C + POST_RAPID_SK_AB_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+rc.model.5 <- lmer(POST_RAPID_RC_AB ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + POST_RAPID_WR_AB_C + 
+                     POST_RAPID_VK_AB_C + POST_RAPID_SK_AB_C + POST_WIAT_SS_C + TTS_LOG_C +
+                     (1|CLASS_ID), data = UDIO_DATASET_C)
+rc.model.6 <- lmer(POST_RAPID_RC_AB ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + POST_RAPID_WR_AB_C + 
+                     POST_RAPID_VK_AB_C + POST_RAPID_SK_AB_C + POST_WIAT_SS_C + TTS_LOG_C + TTS_LOG_C:IEP +
+                     (1|CLASS_ID), data = UDIO_DATASET_C)
+rc.model.7 <- lmer(POST_RAPID_RC_AB ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + POST_RAPID_WR_AB_C +
+                     POST_RAPID_VK_AB_C + POST_RAPID_SK_AB_C + POST_WIAT_SS_C + TTS_LOG_C + TTS_LOG_C:ELL +
+                     (1|CLASS_ID), data = UDIO_DATASET_C)
+rc.model.8 <- lmer(POST_RAPID_RC_AB ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + POST_RAPID_WR_AB_C +
+                     POST_RAPID_VK_AB_C + POST_RAPID_SK_AB_C + POST_WIAT_SS_C + TTS_LOG_C + TTS_LOG_C:FARMS +
+                     (1|CLASS_ID), data = UDIO_DATASET_C)
+rc.model.9 <- lmer(POST_RAPID_RC_AB ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + POST_RAPID_WR_AB_C +
+                     POST_RAPID_VK_AB_C + POST_RAPID_SK_AB_C + POST_WIAT_SS_C + TTS_LOG_C + TTS_LOG_C:POST_RAPID_WR_AB_C +
+                     (1|CLASS_ID), data = UDIO_DATASET_C)
+rc.model.10 <- lmer(POST_RAPID_RC_AB ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + POST_RAPID_WR_AB_C +
+                     POST_RAPID_VK_AB_C + POST_RAPID_SK_AB_C + POST_WIAT_SS_C + TTS_LOG_C + TTS_LOG_C:POST_RAPID_SK_AB_C +
+                     (1|CLASS_ID), data = UDIO_DATASET_C)
+rc.model.11 <- lmer(POST_RAPID_RC_AB ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + POST_RAPID_WR_AB_C +
+                     POST_RAPID_VK_AB_C + POST_RAPID_SK_AB_C + POST_WIAT_SS_C + TTS_LOG_C + TTS_LOG_C:POST_RAPID_VK_AB_C +
+                     (1|CLASS_ID), data = UDIO_DATASET_C)
+rc.model.12 <- lmer(POST_RAPID_RC_AB ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + POST_RAPID_WR_AB_C +
+                     POST_RAPID_VK_AB_C + POST_RAPID_SK_AB_C + POST_WIAT_SS_C + TTS_LOG_C + TTS_LOG_C:POST_WIAT_SS_C +
+                     (1|CLASS_ID), data = UDIO_DATASET_C)
+```
+
+```{r rapid_rc.table, results="asis", echo=FALSE}
+rc <- list(rc.model.1, rc.model.2, rc.model.3, rc.model.4, rc.model.5, rc.model.6)
+stargazer(rc, title = "HLM Results for RAPID Reading Comprehension Scores",
+          dep.var.labels = "Reading Comp. (Post)",
+          covariate.labels = c("Intercept", "Reading Comp. (Pre)", "ELL Status", "IEP Status", "Free/Reduced Lunch", "Word Recog. (Post)", "Voc. Know. (Post)", "Syn. Know. (Post)", "WIAT SS (Post)", "TTS Use (Log)", "TTS x IEP"),
+          header = F, type = "latex", intercept.bottom = FALSE,
+          add.lines = varComp(rc, length(rc)), notes = "All predictors are grand-mean centered", notes.append = TRUE,
+          table.placement = "h!")
+```
+
+##### Table 2. Predicting post outcome with post outcomes (full condition only)
+
+```{r rapid_rc_f, include=FALSE, echo=FALSE}
+rc.model.1f <- lmer(POST_RAPID_RC_AB ~ (1|CLASS_ID), data = UDIO_DATASET_F)
+rc.model.2f <- lmer(POST_RAPID_RC_AB ~ PRE_RAPID_RC_AB_C + (1|CLASS_ID), data = UDIO_DATASET_F)
+rc.model.3f <- lmer(POST_RAPID_RC_AB ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + (1|CLASS_ID), data = UDIO_DATASET_F)
+rc.model.4f <- lmer(POST_RAPID_RC_AB ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + POST_RAPID_WR_AB_C + 
+                     POST_RAPID_VK_AB_C + POST_RAPID_SK_AB_C + (1|CLASS_ID), data = UDIO_DATASET_F)
+rc.model.5f <- lmer(POST_RAPID_RC_AB ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + POST_RAPID_WR_AB_C + 
+                     POST_RAPID_VK_AB_C + POST_RAPID_SK_AB_C + POST_WIAT_SS_C + TTS_LOG_C +
+                     (1|CLASS_ID), data = UDIO_DATASET_F)
+rc.model.6f <- lmer(POST_RAPID_RC_AB ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + POST_RAPID_WR_AB_C +
+                     POST_RAPID_VK_AB_C + POST_RAPID_SK_AB_C + POST_WIAT_SS_C + TTS_LOG_C + TTS_LOG_C:IEP +
+                     (1|CLASS_ID), data = UDIO_DATASET_F)
+rc.model.7f <- lmer(POST_RAPID_RC_AB ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + POST_RAPID_WR_AB_C +
+                     POST_RAPID_VK_AB_C + POST_RAPID_SK_AB_C + POST_WIAT_SS_C + TTS_LOG_C + TTS_LOG_C:ELL +
+                     (1|CLASS_ID), data = UDIO_DATASET_F)
+rc.model.8f <- lmer(POST_RAPID_RC_AB ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + POST_RAPID_WR_AB_C +
+                     POST_RAPID_VK_AB_C + POST_RAPID_SK_AB_C + POST_WIAT_SS_C + TTS_LOG_C + TTS_LOG_C:FARMS +
+                     (1|CLASS_ID), data = UDIO_DATASET_F)
+rc.model.9f <- lmer(POST_RAPID_RC_AB ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + POST_RAPID_WR_AB_C +
+                     POST_RAPID_VK_AB_C + POST_RAPID_SK_AB_C + POST_WIAT_SS_C + TTS_LOG_C + TTS_LOG_C:POST_RAPID_WR_AB_C +
+                     (1|CLASS_ID), data = UDIO_DATASET_F)
+rc.model.10f <- lmer(POST_RAPID_RC_AB ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + POST_RAPID_WR_AB_C +
+                     POST_RAPID_VK_AB_C + POST_RAPID_SK_AB_C + POST_WIAT_SS_C + TTS_LOG_C + TTS_LOG_C:POST_RAPID_VK_AB_C +
+                     (1|CLASS_ID), data = UDIO_DATASET_F)
+rc.model.11f <- lmer(POST_RAPID_RC_AB ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + POST_RAPID_WR_AB_C +
+                     POST_RAPID_VK_AB_C + POST_RAPID_SK_AB_C + POST_WIAT_SS_C + TTS_LOG_C + TTS_LOG_C:POST_RAPID_SK_AB_C +
+                     (1|CLASS_ID), data = UDIO_DATASET_F)
+rc.model.12f <- lmer(POST_RAPID_RC_AB ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + POST_RAPID_WR_AB_C +
+                     POST_RAPID_VK_AB_C + POST_RAPID_SK_AB_C + POST_WIAT_SS_C + TTS_LOG_C + TTS_LOG_C:POST_WIAT_SS_C +
+                     (1|CLASS_ID), data = UDIO_DATASET_F)
+```
+
+```{r rapid_rc_f.table, results="asis", echo=FALSE}
+rc.f <- list(rc.model.3f, rc.model.4f, rc.model.5f, rc.model.6f, rc.model.7f, rc.model.8f)
+stargazer(rc.f, title = "HLM Results for RAPID Reading Comprehension Scores (Full Condition)",
+          dep.var.labels = "Reading Comp. (Post)",
+          covariate.labels = c("Intercept", "Reading Comp. (Pre)", "ELL Status", "IEP Status", "Free/Reduced Lunch", "Word Recog. (Post)", "Voc. Know. (Post)", "Syn. Know. (Post)", "WIAT SS (Post)", "TTS Use (log)", "TTS x IEP", "TTS x ELL", "TTS x FARMS"),
+          header = F, type = "latex", intercept.bottom = FALSE,
+          add.lines = varComp(rc.f, length(rc.f)), notes = "All predictors are grand-mean centered", notes.append = TRUE,
+          table.placement = "h!")
+```
+
+##### Table 3. Predicting difference scores with pre outcomes (all students)
+
+```{r rapid_diff_rc, include=FALSE, echo=FALSE}
+rc.diff.1 <- lmer(DIFF_RC ~ (1|CLASS_ID), data = UDIO_DATASET_C)
+rc.diff.2 <- lmer(DIFF_RC ~ PRE_RAPID_RC_AB_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+rc.diff.3 <- lmer(DIFF_RC ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + (1|CLASS_ID), data = UDIO_DATASET_C)
+rc.diff.4 <- lmer(DIFF_RC ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + PRE_RAPID_WR_AB_C + 
+                     PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+rc.diff.5 <- lmer(DIFF_RC ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + PRE_RAPID_WR_AB_C + 
+                     PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_WIAT_SS_C + PRE_R_MRQ + TTS_LOG_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+rc.diff.6 <- lmer(DIFF_RC ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + PRE_RAPID_WR_AB_C + 
+                     PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_WIAT_SS_C + TTS_LOG_C + TTS_LOG_C:ELL + (1|CLASS_ID), data = UDIO_DATASET_C)
+rc.diff.7 <- lmer(DIFF_RC ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + PRE_RAPID_WR_AB_C + 
+                     PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_WIAT_SS_C + TTS_LOG_C + TTS_LOG_C:IEP + (1|CLASS_ID), data = UDIO_DATASET_C)
+rc.diff.8 <- lmer(DIFF_RC ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + PRE_RAPID_WR_AB_C + 
+                     PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_WIAT_SS_C + TTS_LOG_C + TTS_LOG_C:FARMS + (1|CLASS_ID), data = UDIO_DATASET_C)
+rc.diff.9 <- lmer(DIFF_RC ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + PRE_RAPID_WR_AB_C + 
+                     PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_WIAT_SS_C + TTS_LOG_C + TTS_LOG_C:PRE_RAPID_RC_AB_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+rc.diff.10 <- lmer(DIFF_RC ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + PRE_RAPID_WR_AB_C + 
+                     PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_WIAT_SS_C + TTS_LOG_C + TTS_LOG_C:PRE_RAPID_WR_AB_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+rc.diff.11 <- lmer(DIFF_RC ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + PRE_RAPID_WR_AB_C + 
+                     PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_WIAT_SS_C + TTS_LOG_C + TTS_LOG_C:PRE_RAPID_SK_AB_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+rc.diff.12 <- lmer(DIFF_RC ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + PRE_RAPID_WR_AB_C + 
+                     PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_WIAT_SS_C + TTS_LOG_C + TTS_LOG_C:PRE_RAPID_VK_AB_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+rc.diff.13 <- lmer(DIFF_RC ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + PRE_RAPID_WR_AB_C + 
+                     PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_WIAT_SS_C + TTS_LOG_C + TTS_LOG_C:PRE_WIAT_SS_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+
+rc.diff.14 <- lmer(DIFF_RC ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + PRE_RAPID_WR_AB_C + 
+                     PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_WIAT_SS_C + TTS_LOG_C + TTS_LOG_C:PRE_RAPID_RC_AB_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+rc.diff.15 <- lmer(DIFF_RC ~ PRE_RAPID_RC_AB_C_Plus1SD + ELL + IEP + FARMS + PRE_RAPID_WR_AB_C + 
+                     PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_WIAT_SS_C + TTS_LOG_C + TTS_LOG_C:PRE_RAPID_RC_AB_C_Plus1SD + (1|CLASS_ID), data = UDIO_DATASET_C)
+rc.diff.16 <- lmer(DIFF_RC ~ PRE_RAPID_RC_AB_C_Minus1SD + ELL + IEP + FARMS + PRE_RAPID_WR_AB_C + 
+                     PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_WIAT_SS_C + TTS_LOG_C + TTS_LOG_C:PRE_RAPID_RC_AB_C_Minus1SD + (1|CLASS_ID), data = UDIO_DATASET_C)
+model.frame(rc.diff.14)
+new_data_frame.1 <- data.frame(
+  PRE_RAPID_RC_AB_C = mean(model.frame(rc.diff.14)$PRE_RAPID_RC_AB_C),
+  ELL = 0,
+  IEP = 0,
+  FARMS = 0,
+  PRE_RAPID_WR_AB_C = mean(model.frame(rc.diff.14)$PRE_RAPID_WR_AB_C),
+  PRE_RAPID_VK_AB_C = mean(model.frame(rc.diff.14)$PRE_RAPID_VK_AB_C),
+  PRE_RAPID_SK_AB_C = mean(model.frame(rc.diff.14)$PRE_RAPID_SK_AB_C),
+  PRE_WIAT_SS_C = mean(model.frame(rc.diff.14)$PRE_WIAT_SS_C),
+  TTS_LOG_C = mean(model.frame(rc.diff.14)$TTS_LOG_C)
+)
+new_data_frame.2 <- data.frame(
+  PRE_RAPID_RC_AB_C_Plus1SD = mean(model.frame(rc.diff.15)$PRE_RAPID_RC_AB_C_Plus1SD),
+  ELL = 0,
+  IEP = 0,
+  FARMS = 0,
+  PRE_RAPID_WR_AB_C = mean(model.frame(rc.diff.15)$PRE_RAPID_WR_AB_C),
+  PRE_RAPID_VK_AB_C = mean(model.frame(rc.diff.15)$PRE_RAPID_VK_AB_C),
+  PRE_RAPID_SK_AB_C = mean(model.frame(rc.diff.15)$PRE_RAPID_SK_AB_C),
+  PRE_WIAT_SS_C = mean(model.frame(rc.diff.15)$PRE_WIAT_SS_C),
+  TTS_LOG_C = mean(model.frame(rc.diff.15)$TTS_LOG_C)
+)
+new_data_frame.3 <- data.frame(
+  PRE_RAPID_RC_AB_C_Minus1SD = mean(model.frame(rc.diff.16)$PRE_RAPID_RC_AB_C_Minus1SD),
+  ELL = 0,
+  IEP = 0,
+  FARMS = 0,
+  PRE_RAPID_WR_AB_C = mean(model.frame(rc.diff.16)$PRE_RAPID_WR_AB_C),
+  PRE_RAPID_VK_AB_C = mean(model.frame(rc.diff.16)$PRE_RAPID_VK_AB_C),
+  PRE_RAPID_SK_AB_C = mean(model.frame(rc.diff.16)$PRE_RAPID_SK_AB_C),
+  PRE_WIAT_SS_C = mean(model.frame(rc.diff.15)$PRE_WIAT_SS_C),
+  TTS_LOG_C = mean(model.frame(rc.diff.16)$TTS_LOG_C)
+)
+#write.csv(new_data_frame, "new.frame.csv", row.names = FALSE)
+#write.csv(new_data_frame.2, "new.frame.2.csv", row.names = FALSE)
+#write.csv(new_data_frame.3, "new.frame.3.csv", row.names = FALSE)
+
+new_data_frame.1c <- within(read.csv("new.frame.csv", stringsAsFactors = FALSE), {
+  ELL <- factor(ELL)
+  IEP <- factor(IEP)
+  FARMS <- factor(FARMS)
+  C_POS <- "Mean"
+})
+new_data_frame.2c <- within(read.csv("new.frame.2.csv", stringsAsFactors = FALSE), {
+  ELL <- factor(ELL)
+  IEP <- factor(IEP)
+  FARMS <- factor(FARMS)
+  C_POS <- "Mean + 1SD"
+})
+new_data_frame.3c <- within(read.csv("new.frame.3.csv", stringsAsFactors = FALSE), {
+  ELL <- factor(ELL)
+  IEP <- factor(IEP)
+  FARMS <- factor(FARMS)
+  C_POS <- "Mean - 1SD"
+})
+new_data_frame.1c$RC_DIFF <- predict(rc.diff.14, new_data_frame.1c, re.form = ~0)
+new_data_frame.2c$RC_DIFF <- predict(rc.diff.15, new_data_frame.2c, re.form = ~0)
+new_data_frame.3c$RC_DIFF <- predict(rc.diff.16, new_data_frame.3c, re.form = ~0)
+
+new_frame <- rbind(new_data_frame.1c, 
+                      rename(new_data_frame.2c, PRE_RAPID_RC_AB_C = PRE_RAPID_RC_AB_C_Plus1SD),
+                      rename(new_data_frame.3c, PRE_RAPID_RC_AB_C = PRE_RAPID_RC_AB_C_Minus1SD))
+new_frame$C_POS <- factor(new_frame$C_POS, levels = c("Mean - 1SD", "Mean", "Mean + 1SD"))
+new_frame$COND <- as.factor(paste(new_frame$ELL, new_frame$IEP, new_frame$FARMS, sep = ", "))
+
+new_frame$RC_DIFF <- predict(rc.diff.14, new_frame, re.form = ~0)
+
+ggplot(new_frame, aes(y = RC_DIFF, x = PRE_RAPID_RC_AB_C, group = COND)) + geom_point() + geom_line() + facet_wrap(~COND, ncol=4)
+```
+
+```{r rapid_diff_rc.table, results="asis", echo=FALSE}
+rc.diff <- list(rc.diff.3, rc.diff.4, rc.diff.5, rc.diff.6, rc.diff.7, rc.diff.9)
+stargazer(rc.diff, title = "HLM Results for RAPID Reading Comprehension Difference Scores",
+          dep.var.labels = "Reading Comp. Diff. Score",
+          covariate.labels = c("Intercept", "Reading Comp. (Pre)", "ELL Status", "IEP Status", "Free/Reduced Lunch", "Word Recog. (Pre)", "Voc. Know. (Pre)", "Syn. Know. (Pre)", "WIAT SS (Pre)", "Read MRQ (Pre)", "TTS (log)", "TTS x IEP", "TTS x ELL", "TTS x Reading Comp (Pre)"),
+          header = F, type = "latex", intercept.bottom = FALSE,
+          add.lines = varComp(rc.diff, length(rc.diff)), notes = "All predictors are grand-mean centered", notes.append = TRUE,
+          table.placement = "h!")
+```
+
+##### Table 4. Predicting difference scores with pre outcomes (full condition only)
+
+```{r rapid_diff_rc_f, include=FALSE, echo=FALSE}
+rc.diff.1f <- lmer(DIFF_RC ~ (1|CLASS_ID), data = UDIO_DATASET_F)
+rc.diff.2f <- lmer(DIFF_RC ~ PRE_RAPID_RC_AB_C + (1|CLASS_ID), data = UDIO_DATASET_F)
+rc.diff.3f <- lmer(DIFF_RC ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + (1|CLASS_ID), data = UDIO_DATASET_F)
+rc.diff.4f <- lmer(DIFF_RC ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + PRE_RAPID_WR_AB_C + 
+                     PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + (1|CLASS_ID), data = UDIO_DATASET_F)
+rc.diff.5f <- lmer(DIFF_RC ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + PRE_RAPID_WR_AB_C + 
+                     PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_WIAT_SS_C + PRE_R_MRQ + TTS_LOG_C + (1|CLASS_ID), data = UDIO_DATASET_F)
+rc.diff.6f <- lmer(DIFF_RC ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + PRE_RAPID_WR_AB_C + 
+                     PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_WIAT_SS_C + TTS_LOG_C + TTS_LOG_C:ELL + (1|CLASS_ID), data = UDIO_DATASET_F)
+rc.diff.7f <- lmer(DIFF_RC ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + PRE_RAPID_WR_AB_C + 
+                     PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_WIAT_SS_C + TTS_LOG_C + TTS_LOG_C:IEP + (1|CLASS_ID), data = UDIO_DATASET_F)
+rc.diff.8f <- lmer(DIFF_RC ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + PRE_RAPID_WR_AB_C + 
+                     PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_WIAT_SS_C + TTS_LOG_C + TTS_LOG_C:FARMS + (1|CLASS_ID), data = UDIO_DATASET_F)
+rc.diff.9f <- lmer(DIFF_RC ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + PRE_RAPID_WR_AB_C + 
+                     PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_WIAT_SS_C + TTS_LOG_C + TTS_LOG_C:PRE_RAPID_RC_AB_C + (1|CLASS_ID), data = UDIO_DATASET_F)
+rc.diff.10f <- lmer(DIFF_RC ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + PRE_RAPID_WR_AB_C + 
+                     PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_WIAT_SS_C + TTS_LOG_C + TTS_LOG_C:PRE_RAPID_VK_AB_C + (1|CLASS_ID), data = UDIO_DATASET_F)
+rc.diff.11f <- lmer(DIFF_RC ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + PRE_RAPID_WR_AB_C + 
+                     PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_WIAT_SS_C + TTS_LOG_C + TTS_LOG_C:PRE_RAPID_WR_AB_C + (1|CLASS_ID), data = UDIO_DATASET_F)
+rc.diff.12f <- lmer(DIFF_RC ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + PRE_RAPID_WR_AB_C + 
+                     PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_WIAT_SS_C + TTS_LOG_C + TTS_LOG_C:PRE_RAPID_SK_AB_C + (1|CLASS_ID), data = UDIO_DATASET_F)
+rc.diff.13f <- lmer(DIFF_RC ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + PRE_RAPID_WR_AB_C + 
+                     PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_WIAT_SS_C + TTS_LOG_C + TTS_LOG_C:PRE_WIAT_SS_C + (1|CLASS_ID), data = UDIO_DATASET_F)
+
+rc.diff.9f <- lmer(DIFF_RC ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + PRE_RAPID_WR_AB_C + 
+                     PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_WIAT_SS_C + TTS_LOG_C + TTS_LOG_C:PRE_RAPID_RC_AB_C + (1|CLASS_ID), data = UDIO_DATASET_F)
+
+rc.diff.14f <- lmer(DIFF_RC ~ PRE_RAPID_RC_AB_C_Minus1SD + ELL + IEP + FARMS + PRE_RAPID_WR_AB_C + 
+                     PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_WIAT_SS_C + TTS_LOG_C + TTS_LOG_C:PRE_RAPID_RC_AB_C_Minus1SD + (1|CLASS_ID), data = UDIO_DATASET_F)
+rc.diff.15f <- lmer(DIFF_RC ~ PRE_RAPID_RC_AB_C_Minus2SD + ELL + IEP + FARMS + PRE_RAPID_WR_AB_C + 
+                     PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_WIAT_SS_C + TTS_LOG_C + TTS_LOG_C:PRE_RAPID_RC_AB_C_Minus2SD + (1|CLASS_ID), data = UDIO_DATASET_F)
+
+rc.diff.16f <- lmer(DIFF_RC ~ PRE_RAPID_RC_AB_C_Plus1SD + ELL + IEP + FARMS + PRE_RAPID_WR_AB_C + 
+                     PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_WIAT_SS_C + TTS_LOG_C + TTS_LOG_C:PRE_RAPID_RC_AB_C_Plus1SD + (1|CLASS_ID), data = UDIO_DATASET_F)
+rc.diff.17f <- lmer(DIFF_RC ~ PRE_RAPID_RC_AB_C_Plus2SD + ELL + IEP + FARMS + PRE_RAPID_WR_AB_C + 
+                     PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_WIAT_SS_C + TTS_LOG_C + TTS_LOG_C:PRE_RAPID_RC_AB_C_Plus2SD + (1|CLASS_ID), data = UDIO_DATASET_F)
+```
+
+```{r rapid_diff_rc_f.table, results="asis", echo=FALSE}
+rc.diff.f <- list(rc.diff.3f, rc.diff.4f, rc.diff.5f, rc.diff.6f, rc.diff.7f, rc.diff.9f)
+stargazer(rc.diff.f, title = "HLM Results for RAPID Reading Comprehension Difference Scores (Full condition only)",
+          dep.var.labels = "Reading Comp. Diff. Score",
+          covariate.labels = c("Intercept", "Reading Comp. (Pre)", "ELL Status", "IEP Status", "Free/Reduced Lunch", "Word Recog. (Pre)", "Voc. Know. (Pre)", "Syn. Know. (Pre)", "WIAT SS (Pre)", "Read MRQ (Pre)", "TTS (log)", "TTS x IEP", "TTS x ELL", "TTS x Reading Comp (Pre)"),
+          header = F, type = "latex", intercept.bottom = FALSE,
+          add.lines = varComp(rc.diff.f, length(rc.diff.f)), notes = "All predictors are grand-mean centered", notes.append = TRUE,
+          table.placement = "h!")
+```
+
+#### Part 2 Models based on WIAT (Writing)
+##### Table 5. Predicting post outcome with post outcomes (all students)
+
+```{r wiat, echo=FALSE, include=FALSE}
+wiat.model.1 <- lmer(POST_WIAT_SS ~ (1|CLASS_ID), data = UDIO_DATASET_C)
+wiat.model.2 <- lmer(POST_WIAT_SS ~ PRE_WIAT_SS_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+wiat.model.3 <- lmer(POST_WIAT_SS ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + (1|CLASS_ID), data = UDIO_DATASET_C)
+wiat.model.4 <- lmer(POST_WIAT_SS ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH_C + POST_RAPID_WR_AB_C + POST_RAPID_VK_AB_C + POST_RAPID_SK_AB_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+wiat.model.5 <- lmer(POST_WIAT_SS ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH_C + POST_RAPID_VK_AB_C + POST_RAPID_RC_AB_C + TTS_LOG_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+wiat.model.6 <- lmer(POST_WIAT_SS ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH_C + POST_RAPID_VK_AB_C + POST_RAPID_RC_AB_C + TTS_LOG_C + TTS_LOG_C:IEP + (1|CLASS_ID), data = UDIO_DATASET_C)
+wiat.model.7 <- lmer(POST_WIAT_SS ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH_C + POST_RAPID_VK_AB_C + POST_RAPID_RC_AB_C + TTS_LOG_C + TTS_LOG_C:ELL + (1|CLASS_ID), data = UDIO_DATASET_C)
+wiat.model.8 <- lmer(POST_WIAT_SS ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH_C + POST_RAPID_VK_AB_C + POST_RAPID_RC_AB_C + TTS_LOG_C + TTS_LOG_C:FARMS + (1|CLASS_ID), data = UDIO_DATASET_C)
+wiat.model.9 <- lmer(POST_WIAT_SS ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH_C + POST_RAPID_VK_AB_C + POST_RAPID_RC_AB_C + TTS_LOG_C + TTS_LOG_C:PRE_WIAT_SS_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+wiat.model.10 <- lmer(POST_WIAT_SS ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH_C + POST_RAPID_VK_AB_C + POST_RAPID_RC_AB_C + TTS_LOG_C + TTS_LOG_C:POST_RAPID_RC_AB_C + (1|CLASS_ID), data = UDIO_DATASET_C) ## Significant interaction effects
+wiat.model.11 <- lmer(POST_WIAT_SS ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH_C + POST_RAPID_VK_AB_C + POST_RAPID_RC_AB_C + TTS_LOG_C + TTS_LOG_C:POST_RAPID_VK_AB_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+```
+
+```{r wiat_table, results="asis", echo=FALSE}
+wiat <- list(wiat.model.1, wiat.model.2, wiat.model.3, wiat.model.4, wiat.model.5, wiat.model.10)
+stargazer(wiat, title = "HLM Results for WIAT Standardized Scores",
+          dep.var.labels = "WIAT Standardized Score (Post)",
+          covariate.labels = c("Intercept", "WIAT SS (Pre)", "ELL Status", "IEP Status", "Free/Reduced Lunch", "Keyboarding", "Word Recog. (Post)", "Voc. Know. (Post)", "Syn. Know. (Post)", "Reading Comp. (Post)", "TTS Usage (log)", "TTS:Reading Com. (Pre)"), 
+          header = F, type = "latex", intercept.bottom = FALSE,
+          add.lines = varComp(wiat, length(wiat)), notes = "All predictors are grand-mean centered", notes.append = TRUE)
+```
+
+##### Table 6. Predicting post outcome with post outcomes (full condition only)
+
+```{r wiat.f, echo=FALSE, include=FALSE}
+wiat.model.1f <- lmer(POST_WIAT_SS ~ (1|CLASS_ID), data = UDIO_DATASET_F)
+wiat.model.2f <- lmer(POST_WIAT_SS ~ PRE_WIAT_SS_C + (1|CLASS_ID), data = UDIO_DATASET_F)
+wiat.model.3f <- lmer(POST_WIAT_SS ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + (1|CLASS_ID), data = UDIO_DATASET_F)
+wiat.model.4f <- lmer(POST_WIAT_SS ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH_C + POST_RAPID_WR_AB_C + POST_RAPID_VK_AB_C + POST_RAPID_SK_AB_C + (1|CLASS_ID), data = UDIO_DATASET_F)
+wiat.model.5f <- lmer(POST_WIAT_SS ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH_C + POST_RAPID_VK_AB_C + POST_RAPID_RC_AB_C + TTS_LOG_C + (1|CLASS_ID), data = UDIO_DATASET_F)
+wiat.model.6f <- lmer(POST_WIAT_SS ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH_C + POST_RAPID_VK_AB_C + POST_RAPID_RC_AB_C + TTS_LOG_C + TTS_LOG_C:IEP + (1|CLASS_ID), data = UDIO_DATASET_F)
+wiat.model.7f <- lmer(POST_WIAT_SS ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH_C + POST_RAPID_VK_AB_C + POST_RAPID_RC_AB_C + TTS_LOG_C + TTS_LOG_C:ELL + (1|CLASS_ID), data = UDIO_DATASET_F)
+wiat.model.8f <- lmer(POST_WIAT_SS ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH_C + POST_RAPID_VK_AB_C + POST_RAPID_RC_AB_C + TTS_LOG_C + TTS_LOG_C:FARMS + (1|CLASS_ID), data = UDIO_DATASET_F)
+wiat.model.9f <- lmer(POST_WIAT_SS ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH_C + POST_RAPID_VK_AB_C + POST_RAPID_RC_AB_C + TTS_LOG_C + TTS_LOG_C:PRE_WIAT_SS_C + (1|CLASS_ID), data = UDIO_DATASET_F)
+wiat.model.10f <- lmer(POST_WIAT_SS ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH_C + POST_RAPID_VK_AB_C + POST_RAPID_RC_AB_C + TTS_LOG_C + TTS_LOG_C:POST_RAPID_RC_AB_C + (1|CLASS_ID), data = UDIO_DATASET_F)
+wiat.model.11f <- lmer(POST_WIAT_SS ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH_C + POST_RAPID_VK_AB_C + POST_RAPID_RC_AB_C + TTS_LOG_C + TTS_LOG_C:POST_RAPID_VK_AB_C + (1|CLASS_ID), data = UDIO_DATASET_F)
+
+```
+
+```{r wiat_table.f, results="asis", echo=FALSE}
+wiat.f <- list(wiat.model.1f, wiat.model.2f, wiat.model.3f, wiat.model.4f, wiat.model.5f, wiat.model.10f)
+stargazer(wiat.f, title = "HLM Results for WIAT Standardized Scores (Full Condition Only)",
+          dep.var.labels = "WIAT Standardized Score (Post)",
+          covariate.labels = c("Intercept", "WIAT SS (Pre)", "ELL Status", "IEP Status", "Free/Reduced Lunch", "Keyboarding", "Word Recog. (Post)", "Voc. Know. (Post)", "Syn. Know. (Post)", "Reading Comp. (Post)", "TTS Usage (log)", "TTS:Reading Comp. (Pre)"), 
+          header = F, type = "latex", intercept.bottom = FALSE,
+          add.lines = varComp(wiat.f, length(wiat.f)), notes = "All predictors are grand-mean centered", notes.append = TRUE)
+```
+
+##### Table 7. Predicting difference scores with pre outcomes (all students)
+
+```{r wiat.diff, echo=FALSE}
+wiat.diff.1 <- lmer(DIFF_WIAT ~ (1|CLASS_ID), data = UDIO_DATASET_C)
+wiat.diff.2 <- lmer(DIFF_WIAT ~ PRE_WIAT_SS_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+wiat.diff.3 <- lmer(DIFF_WIAT ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + (1|CLASS_ID), data = UDIO_DATASET_C)
+wiat.diff.4 <- lmer(DIFF_WIAT ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH_C + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+wiat.diff.5 <- lmer(DIFF_WIAT ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH_C + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_RAPID_RC_AB_C + PRE_W_MRQ_C + TTS_LOG_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+wiat.diff.6 <- lmer(DIFF_WIAT ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH_C + PRE_W_MRQ_C + TTS_LOG_C + TTS_LOG_C:IEP + (1|CLASS_ID), data = UDIO_DATASET_C)
+wiat.diff.7 <- lmer(DIFF_WIAT ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH_C + PRE_W_MRQ_C + TTS_LOG_C + TTS_LOG_C:ELL + (1|CLASS_ID), data = UDIO_DATASET_C)
+wiat.diff.8 <- lmer(DIFF_WIAT ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH_C + PRE_W_MRQ_C + TTS_LOG_C + TTS_LOG_C:FARMS + (1|CLASS_ID), data = UDIO_DATASET_C)
+
+wiat.diff.9 <- lmer(DIFF_WIAT ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH_C + PRE_W_MRQ_C + PRE_W_MRQ_C:IEP + (1|CLASS_ID), data = UDIO_DATASET_C)
+wiat.diff.10 <- lmer(DIFF_WIAT ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH_C + PRE_W_MRQ_C + PRE_W_MRQ_C:ELL + (1|CLASS_ID), data = UDIO_DATASET_C)
+wiat.diff.11 <- lmer(DIFF_WIAT ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH_C + PRE_W_MRQ_C + PRE_W_MRQ_C:FARMS + (1|CLASS_ID), data = UDIO_DATASET_C)
+
+wiat.diff.12 <- lmer(DIFF_WIAT ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH_C + PRE_W_MRQ_C + PRE_WIAT_SS_C:IEP + (1|CLASS_ID), data = UDIO_DATASET_C)
+wiat.diff.13 <- lmer(DIFF_WIAT ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH_C + PRE_W_MRQ_C + PRE_WIAT_SS_C:ELL + (1|CLASS_ID), data = UDIO_DATASET_C)
+wiat.diff.14 <- lmer(DIFF_WIAT ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH_C + PRE_W_MRQ_C + PRE_WIAT_SS_C:FARMS + (1|CLASS_ID), data = UDIO_DATASET_C)
+wiat.diff.15 <- lmer(DIFF_WIAT ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH_C + PRE_W_MRQ_C + TTS_LOG_C + TTS_LOG_C:PRE_WIAT_SS_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+wiat.diff.16 <- lmer(DIFF_WIAT ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH_C + PRE_W_MRQ_C + TTS_LOG_C + TTS_LOG_C:PRE_W_MRQ_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+```
+
+```{r wiat_table.diff, results="asis", echo=FALSE}
+wiat.diff <- list(wiat.diff.1, wiat.diff.2, wiat.diff.3, wiat.diff.4, wiat.diff.5, wiat.diff.6)
+stargazer(wiat.diff, title = "HLM Results for WIAT Difference Scores",
+          dep.var.labels = "WIAT Difference Score",
+          covariate.labels = c("Intercept", "WIAT SS (Pre)", "ELL Status", "IEP Status", "Free/Reduced Lunch", "Keyboarding", "Word Recog. (Pre)", "Voc. Know. (Pre)", "Syn. Know. (Pre)", "Reading Comp. (Pre)", "Writing MRQ (Pre)", "TTS Usage (log)", "TTS x IEP"),
+          header = F, type = "latex", intercept.bottom = FALSE,
+          add.lines = varComp(wiat.diff, length(wiat.diff)), notes = "All predictors are grand-mean centered", notes.append = TRUE)
+```
+
+##### Table 8. Predicting difference scores with pre outcomes (full condition only)
+
+```{r wiat.diff.f, echo=FALSE}
+wiat.diff.1f <- lmer(DIFF_WIAT ~ (1|CLASS_ID), data = UDIO_DATASET_F)
+wiat.diff.2f <- lmer(DIFF_WIAT ~ PRE_WIAT_SS_C + (1|CLASS_ID), data = UDIO_DATASET_F)
+wiat.diff.3f <- lmer(DIFF_WIAT ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + (1|CLASS_ID), data = UDIO_DATASET_F)
+wiat.diff.4f <- lmer(DIFF_WIAT ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH_C + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + (1|CLASS_ID), data = UDIO_DATASET_F)
+wiat.diff.5f <- lmer(DIFF_WIAT ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH_C + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_RAPID_RC_AB_C + PRE_W_MRQ_C + TTS_LOG_C + (1|CLASS_ID), data = UDIO_DATASET_F)
+wiat.diff.6f <- lmer(DIFF_WIAT ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH_C + PRE_W_MRQ_C + TTS_LOG_C + TTS_LOG_C:IEP + (1|CLASS_ID), data = UDIO_DATASET_F)
+wiat.diff.7f <- lmer(DIFF_WIAT ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH_C + PRE_W_MRQ_C + TTS_LOG_C + TTS_LOG_C:ELL + (1|CLASS_ID), data = UDIO_DATASET_F)
+wiat.diff.8f <- lmer(DIFF_WIAT ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH_C + PRE_W_MRQ_C + TTS_LOG_C + TTS_LOG_C:FARMS + (1|CLASS_ID), data = UDIO_DATASET_F)
+
+wiat.diff.9f <- lmer(DIFF_WIAT ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH_C + PRE_W_MRQ_C + PRE_W_MRQ_C:IEP + (1|CLASS_ID), data = UDIO_DATASET_F)
+wiat.diff.10f <- lmer(DIFF_WIAT ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH_C + PRE_W_MRQ_C + PRE_W_MRQ_C:ELL + (1|CLASS_ID), data = UDIO_DATASET_F)
+wiat.diff.11f <- lmer(DIFF_WIAT ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH_C + PRE_W_MRQ_C + PRE_W_MRQ_C:FARMS + (1|CLASS_ID), data = UDIO_DATASET_F)
+
+wiat.diff.12f <- lmer(DIFF_WIAT ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH_C + PRE_W_MRQ_C + PRE_WIAT_SS_C:IEP + (1|CLASS_ID), data = UDIO_DATASET_F)
+wiat.diff.13f <- lmer(DIFF_WIAT ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH_C + PRE_W_MRQ_C + PRE_WIAT_SS_C:ELL + (1|CLASS_ID), data = UDIO_DATASET_F)
+wiat.diff.14f <- lmer(DIFF_WIAT ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH_C + PRE_W_MRQ_C + PRE_WIAT_SS_C:FARMS + (1|CLASS_ID), data = UDIO_DATASET_F)
+
+wiat.diff.15f <- lmer(DIFF_WIAT ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH_C + PRE_W_MRQ_C + TTS_LOG_C + TTS_LOG_C:PRE_WIAT_SS_C + (1|CLASS_ID), data = UDIO_DATASET_F)
+wiat.diff.16f <- lmer(DIFF_WIAT ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH_C + PRE_W_MRQ_C + TTS_LOG_C + TTS_LOG_C:PRE_W_MRQ_C + (1|CLASS_ID), data = UDIO_DATASET_F)
+```
+
+```{r wiat_table.diff.f, results="asis", echo=FALSE}
+wiat.diff.f <- list(wiat.diff.1f, wiat.diff.2f, wiat.diff.3f, wiat.diff.4f, wiat.diff.5f, wiat.diff.6f)
+stargazer(wiat.diff.f, title = "HLM Results for Difference Scores (Full Condition Only)",
+          dep.var.labels = "WIAT Difference Score",
+          covariate.labels = c("Intercept", "WIAT SS (Pre)", "ELL Status", "IEP Status", "Free/Reduced Lunch", "Keyboarding", "Word Recog. (Pre)", "Voc. Know. (Pre)", "Syn. Know. (Pre)", "Reading Comp. (Pre)", "Writing MRQ (Pre)", "TTS Usage (log)", "TTS x IEP"),
+          header = F, type = "latex", intercept.bottom = FALSE,
+          add.lines = varComp(wiat.diff, length(wiat.diff)), notes = "All predictors are grand-mean centered", notes.append = TRUE)
+```
+
+#### Part 3. Models based on QRI
+##### Table 9. Predicting post outcome with post outcomes (all students)
+
+```{r qri, echo = FALSE, include = FALSE}
+qri.model.1 <- lmer(POST_QRI_PCT ~ (1|CLASS_ID), data = UDIO_DATASET_C)
+qri.model.2 <- lmer(POST_QRI_PCT ~ ELL + IEP + FARMS + (1|CLASS_ID), data = UDIO_DATASET_C)
+qri.model.3 <- lmer(POST_QRI_PCT ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + POST_RAPID_WR_AB_C + POST_RAPID_VK_AB_C + POST_RAPID_SK_AB_C + POST_RAPID_RC_AB_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+qri.model.4 <- lmer(POST_QRI_PCT ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + POST_RAPID_WR_AB_C + POST_RAPID_VK_AB_C + POST_RAPID_RC_AB_C + POST_WIAT_SS_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+qri.model.5 <- lmer(POST_QRI_PCT ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + POST_RAPID_WR_AB_C + POST_RAPID_VK_AB_C +  POST_RAPID_RC_AB_C + POST_WIAT_SS_C + KEY_MATCH_C + TTS_LOG_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+
+qri.model.6 <- lmer(POST_QRI_PCT ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + POST_RAPID_WR_AB_C + POST_RAPID_VK_AB_C +  POST_RAPID_RC_AB_C + POST_WIAT_SS_C + KEY_MATCH_C + TTS_LOG_C + TTS_LOG_C:IEP + (1|CLASS_ID), data = UDIO_DATASET_C)
+qri.model.7 <- lmer(POST_QRI_PCT ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + POST_RAPID_WR_AB_C + POST_RAPID_VK_AB_C +  POST_RAPID_RC_AB_C + POST_WIAT_SS_C + KEY_MATCH_C + TTS_LOG_C + TTS_LOG_C:ELL + (1|CLASS_ID), data = UDIO_DATASET_C)
+qri.model.8 <- lmer(POST_QRI_PCT ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + POST_RAPID_WR_AB_C + POST_RAPID_VK_AB_C +  POST_RAPID_RC_AB_C + POST_WIAT_SS_C + KEY_MATCH_C + TTS_LOG_C + TTS_LOG_C:FARMS + (1|CLASS_ID), data = UDIO_DATASET_C)
+
+qri.model.9 <- lmer(POST_QRI_PCT ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + POST_RAPID_WR_AB_C + POST_RAPID_VK_AB_C +  POST_RAPID_RC_AB_C + POST_WIAT_SS_C + KEY_MATCH_C + TTS_LOG_C + TTS_LOG_C:PRE_QRI_PCT_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+qri.model.10 <- lmer(POST_QRI_PCT ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + POST_RAPID_WR_AB_C + POST_RAPID_VK_AB_C +  POST_RAPID_RC_AB_C + POST_WIAT_SS_C + KEY_MATCH_C + TTS_LOG_C + TTS_LOG_C:POST_RAPID_WR_AB_C+ (1|CLASS_ID), data = UDIO_DATASET_C)
+qri.model.11 <- lmer(POST_QRI_PCT ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + POST_RAPID_WR_AB_C + POST_RAPID_VK_AB_C +  POST_RAPID_RC_AB_C + POST_WIAT_SS_C + KEY_MATCH_C + TTS_LOG_C + TTS_LOG_C:POST_RAPID_VK_AB_C+ (1|CLASS_ID), data = UDIO_DATASET_C)
+qri.model.12 <- lmer(POST_QRI_PCT ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + POST_RAPID_WR_AB_C + POST_RAPID_VK_AB_C +  POST_RAPID_RC_AB_C + POST_WIAT_SS_C + KEY_MATCH_C + TTS_LOG_C + TTS_LOG_C:POST_RAPID_RC_AB_C+ (1|CLASS_ID), data = UDIO_DATASET_C)
+qri.model.13 <- lmer(POST_QRI_PCT ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + POST_RAPID_WR_AB_C + POST_RAPID_VK_AB_C +  POST_RAPID_RC_AB_C + POST_WIAT_SS_C + KEY_MATCH_C + TTS_LOG_C + TTS_LOG_C:POST_WIAT_SS_C+ (1|CLASS_ID), data = UDIO_DATASET_C)
+```
+
+```{r qri_table, results="asis", echo=FALSE}
+qri <- list(qri.model.1, qri.model.2, qri.model.3, qri.model.4, qri.model.5, qri.model.6)
+stargazer(qri, title = "HLM models for QRI Percentatge Score (Post)",
+          dep.var.labels = "Percentage Score for QRI (Post)",
+          covariate.labels = c("Intercept", "ELL Status", "IEP Status", "Free/Reduced Lunch", "QRI (Pre)", "Word Recog. (Post)", "Voc. Know. (Post)", "Syn. Know. (Post)", "Reading Comp. (Post)", "WIAT SS (Post)", "Keyboarding", "TTS Usage (log)", "TTS x ELL"), 
+          header = F, type = "latex", intercept.bottom = FALSE,
+          add.lines = varComp(qri), notes = "All predictors are grand-mean centered", notes.append = TRUE)
+```
+
+##### Table 10. Predicting post outcome with post outcomes (full condition only)
+
+```{r qri.f, echo = FALSE, include = FALSE}
+qri.model.1f <- lmer(POST_QRI_PCT ~ (1|CLASS_ID), data = UDIO_DATASET_F)
+qri.model.2f <- lmer(POST_QRI_PCT ~ ELL + IEP + FARMS + (1|CLASS_ID), data = UDIO_DATASET_F)
+qri.model.3f <- lmer(POST_QRI_PCT ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + POST_RAPID_WR_AB_C + POST_RAPID_VK_AB_C + POST_RAPID_SK_AB_C + POST_RAPID_RC_AB_C + (1|CLASS_ID), data = UDIO_DATASET_F)
+qri.model.4f <- lmer(POST_QRI_PCT ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + POST_RAPID_WR_AB_C + POST_RAPID_VK_AB_C + POST_RAPID_RC_AB_C + POST_WIAT_SS_C + (1|CLASS_ID), data = UDIO_DATASET_F)
+qri.model.5f <- lmer(POST_QRI_PCT ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + POST_RAPID_WR_AB_C + POST_RAPID_VK_AB_C +  POST_RAPID_RC_AB_C + POST_WIAT_SS_C + KEY_MATCH_C + TTS_LOG_C + (1|CLASS_ID), data = UDIO_DATASET_F)
+
+qri.model.6f <- lmer(POST_QRI_PCT ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + POST_RAPID_WR_AB_C + POST_RAPID_VK_AB_C +  POST_RAPID_RC_AB_C + POST_WIAT_SS_C + KEY_MATCH_C + TTS_LOG_C + TTS_LOG_C:IEP + (1|CLASS_ID), data = UDIO_DATASET_F)
+qri.model.7f <- lmer(POST_QRI_PCT ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + POST_RAPID_WR_AB_C + POST_RAPID_VK_AB_C +  POST_RAPID_RC_AB_C + POST_WIAT_SS_C + KEY_MATCH_C + TTS_LOG_C + TTS_LOG_C:ELL + (1|CLASS_ID), data = UDIO_DATASET_F)
+qri.model.8f <- lmer(POST_QRI_PCT ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + POST_RAPID_WR_AB_C + POST_RAPID_VK_AB_C +  POST_RAPID_RC_AB_C + POST_WIAT_SS_C + KEY_MATCH_C + TTS_LOG_C + TTS_LOG_C:FARMS + (1|CLASS_ID), data = UDIO_DATASET_F)
+
+qri.model.9f <- lmer(POST_QRI_PCT ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + POST_RAPID_WR_AB_C + POST_RAPID_VK_AB_C +  POST_RAPID_RC_AB_C + POST_WIAT_SS_C + KEY_MATCH_C + TTS_LOG_C + TTS_LOG_C:PRE_QRI_PCT_C + (1|CLASS_ID), data = UDIO_DATASET_F)
+qri.model.10f <- lmer(POST_QRI_PCT ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + POST_RAPID_WR_AB_C + POST_RAPID_VK_AB_C +  POST_RAPID_RC_AB_C + POST_WIAT_SS_C + KEY_MATCH_C + TTS_LOG_C + TTS_LOG_C:POST_RAPID_RC_AB_C + (1|CLASS_ID), data = UDIO_DATASET_F)
+qri.model.11f <- lmer(POST_QRI_PCT ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + POST_RAPID_WR_AB_C + POST_RAPID_VK_AB_C +  POST_RAPID_RC_AB_C + POST_WIAT_SS_C + KEY_MATCH_C + TTS_LOG_C + TTS_LOG_C:POST_RAPID_VK_AB_C + (1|CLASS_ID), data = UDIO_DATASET_F)
+qri.model.12f <- lmer(POST_QRI_PCT ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + POST_RAPID_WR_AB_C + POST_RAPID_VK_AB_C +  POST_RAPID_RC_AB_C + POST_WIAT_SS_C + KEY_MATCH_C + TTS_LOG_C + TTS_LOG_C:POST_RAPID_WR_AB_C + (1|CLASS_ID), data = UDIO_DATASET_F)
+qri.model.13f <- lmer(POST_QRI_PCT ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + POST_RAPID_WR_AB_C + POST_RAPID_VK_AB_C +  POST_RAPID_RC_AB_C + POST_WIAT_SS_C + KEY_MATCH_C + TTS_LOG_C + TTS_LOG_C:POST_WIAT_SS_C + (1|CLASS_ID), data = UDIO_DATASET_F)
+```
+
+```{r qri_table.f, results="asis", echo=FALSE}
+qri.f <- list(qri.model.1f, qri.model.2f, qri.model.3f, qri.model.4f, qri.model.5f, qri.model.6f)
+stargazer(qri, title = "HLM models for QRI Percentatge Score (Full Condition Only)",
+          dep.var.labels = "Percentage Score for QRI (Post)",
+          covariate.labels = c("Intercept", "ELL Status", "IEP Status", "Free/Reduced Lunch", "QRI (Pre)", "Word Recog. (Post)", "Voc. Know. (Post)", "Syn. Know. (Post)", "Reading Comp. (Post)", "WIAT SS (Post)", "Keyboarding", "TTS Usage (log)", "TTS x ELL"), 
+          header = F, type = "latex", intercept.bottom = FALSE,
+          add.lines = varComp(qri.f, length(qri.f)), notes = "All predictors are grand-mean centered", notes.append = TRUE)
+```
+
+##### Table 11. Predicting difference scores with pre outcomes (all students)
+
+```{r qri.diff, echo = FALSE, include = FALSE}
+qri.diff.1 <- lmer(DIFF_QRI ~ (1|CLASS_ID), data = UDIO_DATASET_C)
+qri.diff.2 <- lmer(DIFF_QRI ~ ELL + IEP + FARMS + (1|CLASS_ID), data = UDIO_DATASET_C)
+qri.diff.3 <- lmer(DIFF_QRI ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_RAPID_RC_AB_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+qri.diff.4 <- lmer(DIFF_QRI ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C + PRE_RAPID_RC_AB_C + PRE_WIAT_SS_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+qri.diff.5 <- lmer(DIFF_QRI ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C +  PRE_RAPID_RC_AB_C + PRE_WIAT_SS_C + KEY_MATCH_C + TTS_LOG_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+qri.diff.6 <- lmer(DIFF_QRI ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C +  PRE_RAPID_RC_AB_C + PRE_WIAT_SS_C + KEY_MATCH_C + TTS_LOG_C + TTS_LOG_C:IEP + (1|CLASS_ID), data = UDIO_DATASET_C)
+qri.diff.7 <- lmer(DIFF_QRI ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C +  PRE_RAPID_RC_AB_C + PRE_WIAT_SS_C + KEY_MATCH_C + TTS_LOG_C + TTS_LOG_C:ELL + (1|CLASS_ID), data = UDIO_DATASET_C)
+qri.diff.8 <- lmer(DIFF_QRI ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C +  PRE_RAPID_RC_AB_C + PRE_WIAT_SS_C + KEY_MATCH_C + TTS_LOG_C + TTS_LOG_C:FARMS + (1|CLASS_ID), data = UDIO_DATASET_C)
+
+qri.diff.9 <- lmer(DIFF_QRI ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C +  PRE_WIAT_SS_C + KEY_MATCH_C + TTS_LOG_C + TTS_LOG_C:PRE_QRI_PCT_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+qri.diff.10 <- lmer(DIFF_QRI ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C +  PRE_WIAT_SS_C + KEY_MATCH_C + TTS_LOG_C + TTS_LOG_C:PRE_RAPID_WR_AB_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+qri.diff.11 <- lmer(DIFF_QRI ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C +  PRE_WIAT_SS_C + KEY_MATCH_C + TTS_LOG_C + TTS_LOG_C:PRE_RAPID_VK_AB_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+qri.diff.12 <- lmer(DIFF_QRI ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C +  PRE_WIAT_SS_C + KEY_MATCH_C + TTS_LOG_C + TTS_LOG_C:PRE_WIAT_SS_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+```
+
+```{r qri_table.diff, results="asis", echo=FALSE}
+qri.diff <- list(qri.diff.1, qri.diff.2, qri.diff.3, qri.diff.4, qri.diff.5, qri.diff.6)
+stargazer(qri.diff, title = "HLM models for QRI Difference Scores",
+          dep.var.labels = "Difference Score for QRI",
+          covariate.labels = c("Intercept", "ELL Status", "IEP Status", "Free/Reduced Lunch", "QRI (Pre)", "Word Recog. (Pre)", "Voc. Know. (Pre)", "Syn. Know. (Pre)", "Reading Comp. (Pre)", "WIAT SS (Post)", "Keyboarding", "TTS Usage (log)", "TTS x IEP"), 
+          header = F, type = "latex", intercept.bottom = FALSE,
+          add.lines = varComp(qri.diff, length(qri.diff)), notes = "All predictors are grand-mean centered", notes.append = TRUE)
+```
+
+##### Table 12. Predicting difference scores with pre outcomes (full condition only)
+
+```{r qri.diff.f, echo = FALSE, include = FALSE}
+qri.diff.1f <- lmer(DIFF_QRI ~ (1|CLASS_ID), data = UDIO_DATASET_F)
+qri.diff.2f <- lmer(DIFF_QRI ~ ELL + IEP + FARMS + (1|CLASS_ID), data = UDIO_DATASET_F)
+qri.diff.3f <- lmer(DIFF_QRI ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_RAPID_RC_AB_C + (1|CLASS_ID), data = UDIO_DATASET_F)
+qri.diff.4f <- lmer(DIFF_QRI ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C + PRE_RAPID_RC_AB_C + PRE_WIAT_SS_C + (1|CLASS_ID), data = UDIO_DATASET_F)
+qri.diff.5f <- lmer(DIFF_QRI ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C +  PRE_RAPID_RC_AB_C + PRE_WIAT_SS_C + KEY_MATCH_C + TTS_LOG_C + (1|CLASS_ID), data = UDIO_DATASET_F)
+qri.diff.6f <- lmer(DIFF_QRI ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C +  PRE_RAPID_RC_AB_C + PRE_WIAT_SS_C + KEY_MATCH_C + TTS_LOG_C + TTS_LOG_C:IEP + (1|CLASS_ID), data = UDIO_DATASET_F)
+qri.diff.7f <- lmer(DIFF_QRI ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C +  PRE_RAPID_RC_AB_C + PRE_WIAT_SS_C + KEY_MATCH_C + TTS_LOG_C + TTS_LOG_C:ELL + (1|CLASS_ID), data = UDIO_DATASET_F)
+qri.diff.8f <- lmer(DIFF_QRI ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C +  PRE_RAPID_RC_AB_C + PRE_WIAT_SS_C + KEY_MATCH_C + TTS_LOG_C + TTS_LOG_C:FARMS + (1|CLASS_ID), data = UDIO_DATASET_F)
+
+qri.diff.9f <- lmer(DIFF_QRI ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C +  PRE_WIAT_SS_C + KEY_MATCH_C + TTS_LOG_C + TTS_LOG_C:PRE_QRI_PCT_C + (1|CLASS_ID), data = UDIO_DATASET_F)
+qri.diff.10f <- lmer(DIFF_QRI ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C +  PRE_WIAT_SS_C + KEY_MATCH_C + TTS_LOG_C + TTS_LOG_C:PRE_RAPID_VK_AB_C + (1|CLASS_ID), data = UDIO_DATASET_F)
+qri.diff.11f <- lmer(DIFF_QRI ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C +  PRE_WIAT_SS_C + KEY_MATCH_C + TTS_LOG_C + TTS_LOG_C:PRE_RAPID_WR_AB_C + (1|CLASS_ID), data = UDIO_DATASET_F)
+qri.diff.12f <- lmer(DIFF_QRI ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + PRE_RAPID_WR_AB_C + PRE_RAPID_VK_AB_C +  PRE_WIAT_SS_C + KEY_MATCH_C + TTS_LOG_C + TTS_LOG_C:PRE_WIAT_SS_C + (1|CLASS_ID), data = UDIO_DATASET_F)
+```
+
+```{r qri_table.diff.f, results="asis", echo=FALSE}
+qri.diff.f <- list(qri.diff.1f, qri.diff.2f, qri.diff.3f, qri.diff.4f, qri.diff.5f, qri.diff.6f)
+stargazer(qri.diff.f, title = "HLM models for QRI Difference Scores (Full Condition Only)",
+          dep.var.labels = "Difference Score for QRI",
+          covariate.labels = c("Intercept", "ELL Status", "IEP Status", "Free/Reduced Lunch", "QRI (Pre)", "Word Recog. (Pre)", "Voc. Know. (Pre)", "Syn. Know. (Pre)", "Reading Comp. (Pre)", "WIAT SS (Post)", "Keyboarding", "TTS Usage (log)", "TTS x IEP"), 
+          header = F, type = "latex", intercept.bottom = FALSE,
+          add.lines = varComp(qri.diff.f, length(qri.diff.f)), notes = "All predictors are grand-mean centered", notes.append = TRUE)
+```
+
+```{r}
+ggplot(new_frame, aes(y = RC_DIFF, x = PRE_RAPID_RC_AB_C, group = COND)) + geom_point() + geom_line() + facet_wrap(~COND, ncol=4)
+```
+

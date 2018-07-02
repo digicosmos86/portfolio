@@ -1,0 +1,41 @@
+---
+title: "Udio HLM Analysis"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library()
+library("stargazer")
+
+UDIO_DATASET_C$PRE_WIAT_COMP <- (UDIO_DATASET_C$PRE_WORDS_SS + UDIO_DATASET_C$PRE_WIAT_SS) / 2
+UDIO_DATASET_C$POST_WIAT_COMP <- (UDIO_DATASET_C$POST_WORDS_SS + UDIO_DATASET_C$POST_WIAT_SS) / 2
+UDIO_DATASET_C$PRE_WIAT_COMP_C <- scale(UDIO_DATASET_C$PRE_WIAT_COMP, scale = FALSE)
+UDIO_DATASET_C$POST_WIAT_COMP_C <- scale(UDIO_DATASET_C$POST_WIAT_COMP, scale = FALSE)
+
+
+```
+
+
+```{r models, include = FALSE}
+model1 <- lmer(POST_RAPID_RC_AB ~ PRE_RAPID_RC_AB_C + IEP + ELL + FARMS + UDIO_CONDITION + (1|CLASS_ID), data = UDIO_DATASET_C)
+model2 <- lmer(POST_RAPID_WR_AB ~ PRE_RAPID_WR_AB_C + IEP + ELL + FARMS + UDIO_CONDITION + (1|CLASS_ID), data = UDIO_DATASET_C)
+model3 <- lmer(POST_RAPID_VK_AB ~ PRE_RAPID_VK_AB_C + IEP + ELL + FARMS + UDIO_CONDITION + (1|CLASS_ID), data = UDIO_DATASET_C)
+model4 <- lmer(POST_RAPID_SK_AB ~ PRE_RAPID_SK_AB_C + IEP + ELL + FARMS + UDIO_CONDITION + (1|CLASS_ID), data = UDIO_DATASET_C)
+model5 <- lmer(POST_WIAT_COMP ~ PRE_WIAT_COMP + IEP + ELL + FARMS + UDIO_CONDITION + KEY_MATCH + (1|CLASS_ID), data = UDIO_DATASET_C)
+
+
+```
+
+```{r rapid_rc.table, results="asis", echo=FALSE}
+models <- list(model1, model2, model3, model4, model5)
+stargazer(models, title = "HLM Results for all outcome variables at post-test",
+          dep.var.labels = c("Reading Comp.", "Word Recog.", "Vocabulary Know.", "Syntactic Know.", "WIAT Writing"),
+          covariate.labels = c("Intercept", "Reading Comp. (Pre)", "Word Recog. (Pre)", "Vocabulary Know. (Pre)", "Syntactic Know. (Pre)", "WIAT Writing (Pre)", "ELL Status", "IEP Status", "Free/Reduced Lunch", "Treatment Condition",  "Keyboarding"),
+          header = F, type = "latex", intercept.bottom = FALSE,
+          add.lines = varComp(models, length(models)), notes = c("All predictors are grand-mean centered", "All random effects are significant at 0.05"), notes.append = TRUE,
+          table.placement = "h!", star.cutoffs = c(0.05, 0.01, 0.001))
+```

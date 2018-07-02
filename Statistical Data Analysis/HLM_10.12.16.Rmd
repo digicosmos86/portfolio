@@ -1,0 +1,92 @@
+---
+title: "HLM_Random_Effects"
+author: "Paul Xu"
+date: "10/13/2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+source("common.R")
+UDIO_DATASET_C <- UDIO_DATASET_C[UDIO_CONDITION != "Supported",]
+```
+
+### Part 1. Comparison of HLM Models with different Random Effects (RAPID RC)
+
+```{r rapid_rc}
+
+#### Baseline Model
+rc.model.5 <- lmer(POST_RAPID_RC_AB ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + POST_RAPID_WR_AB_C + 
+                     POST_RAPID_VK_AB_C + POST_RAPID_SK_AB_C + POST_WIAT_SS_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+
+#### Adding different random effects
+# rc.model.6 <- lmer(POST_RAPID_RC_AB ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + POST_RAPID_WR_AB_C + 
+#                      POST_RAPID_VK_AB_C + POST_RAPID_SK_AB_C + POST_WIAT_SS_C + (1+PRE_RAPID_RC_AB_C|CLASS_ID), data = UDIO_DATASET_C)
+rc.model.7 <- lmer(POST_RAPID_RC_AB ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + POST_RAPID_WR_AB_C + 
+                     POST_RAPID_VK_AB_C + POST_RAPID_SK_AB_C + POST_WIAT_SS_C + (1+ELL|CLASS_ID), data = UDIO_DATASET_C)
+rc.model.8 <- lmer(POST_RAPID_RC_AB ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + POST_RAPID_WR_AB_C + 
+                     POST_RAPID_VK_AB_C + POST_RAPID_SK_AB_C + POST_WIAT_SS_C + (1+IEP|CLASS_ID), data = UDIO_DATASET_C)
+rc.model.9 <- lmer(POST_RAPID_RC_AB ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + POST_RAPID_WR_AB_C + 
+                     POST_RAPID_VK_AB_C + POST_RAPID_SK_AB_C + POST_WIAT_SS_C + (1+FARMS|CLASS_ID), data = UDIO_DATASET_C)
+# rc.model.10 <- lmer(POST_RAPID_RC_AB ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + POST_RAPID_WR_AB_C + 
+#                      POST_RAPID_VK_AB_C + POST_RAPID_SK_AB_C + POST_WIAT_SS_C + (1+POST_RAPID_WR_AB_C|CLASS_ID), data = UDIO_DATASET_C)
+# rc.model.11 <- lmer(POST_RAPID_RC_AB ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + POST_RAPID_WR_AB_C + 
+#                      POST_RAPID_VK_AB_C + POST_RAPID_SK_AB_C + POST_WIAT_SS_C + (1+POST_RAPID_VK_AB_C|CLASS_ID), data = UDIO_DATASET_C)
+# rc.model.12 <- lmer(POST_RAPID_RC_AB ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + POST_RAPID_WR_AB_C + 
+#                      POST_RAPID_VK_AB_C + POST_RAPID_SK_AB_C + POST_WIAT_SS_C + (1+POST_RAPID_SK_AB_C|CLASS_ID), data = UDIO_DATASET_C)
+rc.model.13 <- lmer(POST_RAPID_RC_AB ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + POST_RAPID_WR_AB_C + 
+                     POST_RAPID_VK_AB_C + POST_RAPID_SK_AB_C + POST_WIAT_SS_C + (1+POST_WIAT_SS_C|CLASS_ID), data = UDIO_DATASET_C)
+anova(rc.model.5, rc.model.13)
+
+### Only model 13 remains significant but not by much
+summary(rc.model.13)
+
+# rc.model.14 <- lmer(POST_RAPID_RC_AB ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + UDIO_CONDITION + POST_RAPID_WR_AB_C + 
+#                      POST_RAPID_VK_AB_C + POST_RAPID_SK_AB_C + POST_WIAT_SS_C + POST_WIAT_SS_C:UDIO_CONDITION + (1+POST_WIAT_SS_C|CLASS_ID), data = UDIO_DATASET_C)
+# 
+# summary(rc.model.14)
+
+```
+
+### Part 2. WIAT
+
+```{r wiat}
+# Baseline model
+wiat.model.5 <- lmer(POST_WIAT_SS ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH + POST_RAPID_VK_AB_C + POST_RAPID_RC_AB_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+
+# Adding Random Effects
+wiat.model.6 <- lmer(POST_WIAT_SS ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH + POST_RAPID_VK_AB_C + POST_RAPID_RC_AB_C + (1+PRE_WIAT_SS_C|CLASS_ID), data = UDIO_DATASET_C)
+wiat.model.7 <- lmer(POST_WIAT_SS ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH + POST_RAPID_VK_AB_C + POST_RAPID_RC_AB_C + (1+ELL|CLASS_ID), data = UDIO_DATASET_C)
+wiat.model.8 <- lmer(POST_WIAT_SS ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH + POST_RAPID_VK_AB_C + POST_RAPID_RC_AB_C + (1+IEP|CLASS_ID), data = UDIO_DATASET_C)
+wiat.model.9 <- lmer(POST_WIAT_SS ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH + POST_RAPID_VK_AB_C + POST_RAPID_RC_AB_C + (1+FARMS|CLASS_ID), data = UDIO_DATASET_C)
+wiat.model.10 <- lmer(POST_WIAT_SS ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH + POST_RAPID_VK_AB_C + POST_RAPID_RC_AB_C + (1+KEY_MATCH|CLASS_ID), data = UDIO_DATASET_C)
+wiat.model.11 <- lmer(POST_WIAT_SS ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH + POST_RAPID_VK_AB_C + POST_RAPID_RC_AB_C + (1+POST_RAPID_VK_AB_C|CLASS_ID), data = UDIO_DATASET_C)
+wiat.model.12 <- lmer(POST_WIAT_SS ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH + POST_RAPID_VK_AB_C + POST_RAPID_RC_AB_C + (1+POST_RAPID_RC_AB_C|CLASS_ID), data = UDIO_DATASET_C)
+
+anova(wiat.model.5,wiat.model.11)
+
+# no random effect is significant
+```
+
+### Part 3. QRI
+
+```{r}
+# Baseline model
+qri.model.5 <- lmer(POST_QRI_PCT ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + POST_RAPID_WR_AB_C + POST_RAPID_VK_AB_C +  POST_RAPID_RC_AB_C + POST_WIAT_SS_C + KEY_MATCH_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+
+# Add random effects
+qri.model.6 <- lmer(POST_QRI_PCT ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + POST_RAPID_WR_AB_C + POST_RAPID_VK_AB_C +  POST_RAPID_RC_AB_C + POST_WIAT_SS_C + KEY_MATCH_C + (1+ELL|CLASS_ID), data = UDIO_DATASET_C)
+qri.model.7 <- lmer(POST_QRI_PCT ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + POST_RAPID_WR_AB_C + POST_RAPID_VK_AB_C +  POST_RAPID_RC_AB_C + POST_WIAT_SS_C + KEY_MATCH_C + (1+IEP|CLASS_ID), data = UDIO_DATASET_C)
+qri.model.8 <- lmer(POST_QRI_PCT ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + POST_RAPID_WR_AB_C + POST_RAPID_VK_AB_C +  POST_RAPID_RC_AB_C + POST_WIAT_SS_C + KEY_MATCH_C + (1+FARMS|CLASS_ID), data = UDIO_DATASET_C)
+qri.model.9 <- lmer(POST_QRI_PCT ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + POST_RAPID_WR_AB_C + POST_RAPID_VK_AB_C +  POST_RAPID_RC_AB_C + POST_WIAT_SS_C + KEY_MATCH_C + (1+PRE_QRI_PCT_C|CLASS_ID), data = UDIO_DATASET_C)
+# qri.model.10 <- lmer(POST_QRI_PCT ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + POST_RAPID_WR_AB_C + POST_RAPID_VK_AB_C +  POST_RAPID_RC_AB_C + POST_WIAT_SS_C + KEY_MATCH_C + (1+POST_RAPID_WR_AB_C|CLASS_ID), data = UDIO_DATASET_C)
+# qri.model.11 <- lmer(POST_QRI_PCT ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + POST_RAPID_WR_AB_C + POST_RAPID_VK_AB_C +  POST_RAPID_RC_AB_C + POST_WIAT_SS_C + KEY_MATCH_C + (1+POST_RAPID_VK_AB_C|CLASS_ID), data = UDIO_DATASET_C)
+# qri.model.12 <- lmer(POST_QRI_PCT ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + POST_RAPID_WR_AB_C + POST_RAPID_VK_AB_C +  POST_RAPID_RC_AB_C + POST_WIAT_SS_C + KEY_MATCH_C + (1+POST_RAPID_RC_AB_C|CLASS_ID), data = UDIO_DATASET_C)
+qri.model.13 <- lmer(POST_QRI_PCT ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + POST_RAPID_WR_AB_C + POST_RAPID_VK_AB_C +  POST_RAPID_RC_AB_C + POST_WIAT_SS_C + KEY_MATCH_C + (1+POST_WIAT_SS_C|CLASS_ID), data = UDIO_DATASET_C)
+qri.model.14 <- lmer(POST_QRI_PCT ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + POST_RAPID_WR_AB_C + POST_RAPID_VK_AB_C +  POST_RAPID_RC_AB_C + POST_WIAT_SS_C + KEY_MATCH_C + (1+KEY_MATCH_C|CLASS_ID), data = UDIO_DATASET_C)
+
+anova(qri.model.5, qri.model.6)
+
+# no random effects significant
+```
+

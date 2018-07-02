@@ -1,0 +1,75 @@
+---
+title: "Exploratory Factor Analysis of Event Counts"
+author: "Paul Xu"
+date: "4/8/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library("psych")
+```
+
+Import event counts data for analysis
+
+```{r descriptives}
+event_counts <- read.csv("AllActivity_040617.csv")
+summary(event_counts)
+
+library("dplyr")
+
+event_treatment <- filter(event_counts, treatment == 1L) %>% select(-condition, -treatment, -contains("_all"))
+summary(event_treatment)
+
+### check correlation matrix
+round(cor(event_treatment[, -1]), digits = 3)
+```
+
+The correlation matrix seems to suggest that all project-related variables are highly collinear, and "Collect" in reading is more correlated with project-related variables rather than with reading-related variables.
+
+### Exploratory Factor Analysis
+
+```{r factor}
+
+VSS(event_treatment[, -1], n=5, rotate = "varimax", fm = "pa", SMC = FALSE)
+#eigen(cor(event_treatment[, -1]))
+
+### Try 
+# efa.model.1 <- fa(event_treatment[, -1], nfactors = 2, rotate="varimax", SMC=FALSE, fm = "pa")
+# efa.model.1$e.values
+# efa.model.1$loadings
+
+efa.model.2 <- fa(event_treatment[, -1], nfactors = 3, rotate="varimax", SMC=FALSE, fm = "pa")
+efa.model.2$values
+efa.model.2$loadings
+```
+
+It seems that nfactors = 2 fits the data well and is most straightforward to interpret (reading vs. project), though the 3 factor model is also plausible.  I will proceed the analysis using 2 factors for now.
+
+Now importing Udio data and combine datasets for HLM.
+
+```{r data, message = FALSE, warning = FALSE}
+source("common.R")
+UDIO_DATASET_C$PRE_WIAT_COMP <- (UDIO_DATASET_C$PRE_WORDS_SS + UDIO_DATASET_C$PRE_WIAT_SS) / 2
+UDIO_DATASET_C$POST_WIAT_COMP <- (UDIO_DATASET_C$POST_WORDS_SS + UDIO_DATASET_C$POST_WIAT_SS) / 2
+UDIO_DATASET_C$PRE_WIAT_COMP_C <- scale(UDIO_DATASET_C$PRE_WIAT_COMP, scale = FALSE)
+UDIO_DATASET_C$POST_WIAT_COMP_C <- scale(UDIO_DATASET_C$POST_WIAT_COMP, scale = FALSE)
+
+fac_scores <- as.data.frame(cbind(event_treatment[, 1], efa.model.1$scores))
+colnames(fac_scores) <- c("ID", "F_PROJ", "F_READ")
+fac_scores$ID <- as.character(fac_scores$ID)
+UDIO_DATASET_FA <- left_join(UDIO_DATASET_C, fac_scores, copy = TRUE)
+```
+
+### HLM analysis
+
+#### Reading as outcome
+
+```{r}
+fac.r.model.1 <- lmer(POST_RAPID_RC_AB ~ PRE_RAPID_RC_AB_C + IEP + ELL + FARMS + F_READ + PRE_RAPID_RC_AB_C:F_READ + (1|CLASS_ID), data = UDIO_DATASET_FA[UDIO_DATASET_FA$UDIO_CONDITION == "Full", ])
+summary(fac.r.model.1)
+
+fac.w.model.1 <- lmer(POST_WIAT_COMP ~ PRE_WIAT_COMP_C + IEP + ELL + FARMS + F_READ + F_PROJ + PRE_WIAT_COMP:F_READ + PRE_WIAT_COMP:F_PROJ + (1|CLASS_ID), data = UDIO_DATASET_FA[UDIO_DATASET_FA$UDIO_CONDITION == "Full", ])
+summary(fac.w.model.1)
+```
+

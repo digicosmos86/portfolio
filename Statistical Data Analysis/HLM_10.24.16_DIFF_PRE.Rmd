@@ -1,0 +1,129 @@
+---
+title: "HLM Analysis for Udio"
+author: "Paul Xu"
+date: "October 24, 2016"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+## Process and get data from common.R
+source("common.R")
+library(stargazer)
+UDIO_DATASET_C <- UDIO_DATASET_C[UDIO_CONDITION != "Supported",]
+UDIO_DATASET_C$DIFF_RC <- UDIO_DATASET_C$POST_RAPID_RC_AB - UDIO_DATASET_C$PRE_RAPID_RC_AB
+UDIO_DATASET_C$DIFF_WIAT <- UDIO_DATASET_C$POST_WIAT_SS - UDIO_DATASET_C$PRE_WIAT_SS
+UDIO_DATASET_C$DIFF_QRI <- UDIO_DATASET_C$POST_QRI_PCT - UDIO_DATASET_C$PRE_QRI_PCT
+UDIO_DATASET_C <- as.data.frame(UDIO_DATASET_C)
+
+wc <- read.csv("word_count_1.csv", stringsAsFactors = FALSE)
+wc.by.id <- wc %>% rename(ID = Subjectid) %>% group_by(ID) %>% summarize(TTS=sum(Wordcount, na.rm=TRUE))
+UDIO_DATASET_C <- UDIO_DATASET_C %>% left_join(wc.by.id, copy = TRUE)
+UDIO_DATASET_C[is.na(UDIO_DATASET_C$TTS), "TTS"] <- 0
+```
+
+```{r rapid_diff_rc, include=FALSE, echo=FALSE}
+rc.diff.1 <- lmer(DIFF_RC ~ (1|CLASS_ID), data = UDIO_DATASET_C)
+rc.diff.2 <- lmer(DIFF_RC ~ PRE_RAPID_RC_AB_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+rc.diff.3 <- lmer(DIFF_RC ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + (1|CLASS_ID), data = UDIO_DATASET_C)
+rc.diff.4 <- lmer(DIFF_RC ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + PRE_RAPID_WR_AB_C + 
+                     PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+rc.diff.5 <- lmer(DIFF_RC ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + POST_RAPID_WR_AB_C + 
+                     PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_WIAT_SS_C + TTS_LOG_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+rc.diff.6 <- lmer(DIFF_RC ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + POST_RAPID_WR_AB_C + 
+                     PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_WIAT_SS_C + TTS_LOG_C + TTS_LOG_C:ELL + (1|CLASS_ID), data = UDIO_DATASET_C)
+rc.diff.7 <- lmer(DIFF_RC ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + POST_RAPID_WR_AB_C + 
+                     PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_WIAT_SS_C + TTS_LOG_C + TTS_LOG_C:IEP + (1|CLASS_ID), data = UDIO_DATASET_C)
+rc.diff.8 <- lmer(DIFF_RC ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + POST_RAPID_WR_AB_C + 
+                     PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_WIAT_SS_C + TTS_LOG_C + TTS_LOG_C:FARMS + (1|CLASS_ID), data = UDIO_DATASET_C)
+```
+
+```{r rapid_diff_rc.table, results="asis", echo=FALSE}
+rc <- list(rc.model.1, rc.model.2, rc.model.3, rc.model.4, rc.model.5, rc.diff.8)
+stargazer(rc, title = "HLM Results for RAPID Reading Comprehension Scores",
+          dep.var.labels = "Reading Comp. (Post)",
+          covariate.labels = c("Intercept", "Reading Comp. (Pre)", "ELL Status", "IEP Status", "Free/Reduced Lunch", "Word Recog. (Post)", "Voc. Know. (Post)", "Syn. Know. (Post)", "WIAT SS (Post)", "RC x FARMS"),
+          header = F, type = "latex", intercept.bottom = FALSE,
+          add.lines = varComp(rc, 6), notes = "All predictors are grand-mean centered", notes.append = TRUE,
+          table.placement = "h!")
+```
+
+```{r rapid_rc.pre, include = FALSE, echo=FALSE}
+# rc.model.pre.0 <- lmer(POST_RAPID_RC_AB ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + PRE_RAPID_WR_AB_C +
+#                      PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+# 
+# rc.model.pre.1 <- lmer(POST_RAPID_RC_AB ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + PRE_RAPID_WR_AB_C +
+#                      PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_WIAT_SS_C + PRE_R_MRQ_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+# rc.model.pre.2 <- lmer(POST_RAPID_RC_AB ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + PRE_RAPID_WR_AB_C +
+#                      PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_WIAT_SS_C + PRE_R_MRQ_C + PRE_RAPID_RC_AB_C:FARMS + (1|CLASS_ID), data = UDIO_DATASET_C)
+# rc.model.pre.3 <- lmer(POST_RAPID_RC_AB ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + PRE_RAPID_WR_AB_C +
+#                      PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_WIAT_SS_C + PRE_R_MRQ_C + PRE_RAPID_RC_AB_C:FARMS + + PRE_R_MRQ_C:FARMS + (1|CLASS_ID), data = UDIO_DATASET_C)
+# rc.model.pre.4 <- lmer(POST_RAPID_RC_AB ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + PRE_RAPID_WR_AB_C +
+#                      PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_WIAT_SS_C + PRE_R_MRQ_C + PRE_RAPID_RC_AB_C:FARMS + + PRE_R_MRQ_C:FARMS + PRE_R_MRQ_C:FARMS:PRE_RAPID_RC_AB + (1|CLASS_ID), data = UDIO_DATASET_C)
+# rc.model.pre.5 <- lmer(POST_RAPID_RC_AB ~ PRE_RAPID_RC_AB_C + ELL + IEP + FARMS + PRE_RAPID_WR_AB_C +
+#                      PRE_RAPID_VK_AB_C + PRE_RAPID_SK_AB_C + PRE_WIAT_SS_C + PRE_R_MRQ_C + PRE_RAPID_RC_AB_C:FARMS + + PRE_R_MRQ_C:FARMS + PRE_R_MRQ_C:FARMS:PRE_RAPID_RC_AB + PRE_RAPID_VK_AB_C:IEP + (1|CLASS_ID), data = UDIO_DATASET_C)
+```
+
+```{r rapid_rc.pre.tables, results="asis", echo = FALSE, skip=TRUE}
+# rc.pre <- list(rc.model.pre.0, rc.model.pre.1, rc.model.pre.2, rc.model.pre.3, rc.model.pre.4, rc.model.pre.5)
+# stargazer(rc.pre, title = "HLM Results for RAPID Reading Comprehension Scores with Pre-measures as Predictors",
+#           dep.var.labels = "Reading Comp. (Post)",
+#           covariate.labels = c("Intercept", "Reading Comp. (Pre)", "ELL Status", "IEP Status", "Free/Reduced Lunch", "Word Recog. (Pre)", "Voc. Know. (Pre)", "Syn. Know. (Pre)", "WIAT SS (Pre)", "R MRQ (Pre)", "RC x FARMS", "MRQ x FARMS", "IEP x VK", "FARMS0xMRQxRC", "FARMS1xMRQxRC"), 
+#           header = F, type = "latex", intercept.bottom = FALSE,
+#           add.lines = varComp(rc.pre, 6), notes = "All predictors are grand-mean centered", notes.append = TRUE,
+#           table.placement = "h")
+```
+
+
+```{r wiat, echo=FALSE}
+wiat.model.1 <- lmer(DIFF_WIAT ~ (1|CLASS_ID), data = UDIO_DATASET_C)
+wiat.model.2 <- lmer(DIFF_WIAT ~ PRE_WIAT_SS_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+wiat.model.3 <- lmer(DIFF_WIAT ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + (1|CLASS_ID), data = UDIO_DATASET_C)
+wiat.model.4 <- lmer(DIFF_WIAT ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH_C + POST_RAPID_WR_AB_C + POST_RAPID_VK_AB_C + POST_RAPID_SK_AB_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+wiat.model.5 <- lmer(DIFF_WIAT ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH_C + POST_RAPID_VK_AB_C + POST_RAPID_RC_AB_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+wiat.model.6 <- lmer(DIFF_WIAT ~ PRE_WIAT_SS_C + ELL + IEP + FARMS + KEY_MATCH_C + POST_RAPID_VK_AB_C + POST_RAPID_RC_AB_C + POST_RAPID_RC_AB_C:IEP + (1|CLASS_ID), data = UDIO_DATASET_C)
+```
+
+```{r wiat_table, results="asis", echo=FALSE}
+wiat <- list(wiat.model.1, wiat.model.2, wiat.model.3, wiat.model.4, wiat.model.5, wiat.model.6)
+stargazer(wiat, title = "HLM Results for WIAT Standardized Scores",
+          dep.var.labels = "WIAT Standardized Score (Post)",
+          covariate.labels = c("Intercept", "WIAT SS (Pre)", "ELL Status", "IEP Status", "Free/Reduced Lunch", "Keyboarding", "Word Recog. (Post)", "Voc. Know. (Post)", "Syn. Know. (Post)", "Reading Comp. (Post)", "RC x IEP"), 
+          header = F, type = "latex", intercept.bottom = FALSE,
+          add.lines = varComp(wiat), notes = "All predictors are grand-mean centered", notes.append = TRUE)
+```
+
+```{r qri, echo = FALSE, include = FALSE}
+qri.model.1 <- lmer(DIFF_QRI ~ (1|CLASS_ID), data = UDIO_DATASET_C)
+qri.model.2 <- lmer(DIFF_QRI ~ ELL + IEP + FARMS + (1|CLASS_ID), data = UDIO_DATASET_C)
+qri.model.3 <- lmer(DIFF_QRI ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + POST_RAPID_WR_AB_C + POST_RAPID_VK_AB_C + POST_RAPID_SK_AB_C + POST_RAPID_RC_AB_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+qri.model.4 <- lmer(DIFF_QRI ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + POST_RAPID_WR_AB_C + POST_RAPID_VK_AB_C + POST_RAPID_RC_AB_C + POST_WIAT_SS_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+qri.model.5 <- lmer(DIFF_QRI ~ ELL + IEP + FARMS + PRE_QRI_PCT_C + POST_RAPID_WR_AB_C + POST_RAPID_VK_AB_C +  POST_RAPID_RC_AB_C + POST_WIAT_SS_C + KEY_MATCH_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+```
+
+```{r qri_table, results="asis", echo=FALSE}
+qri <- list(qri.model.1, qri.model.2, qri.model.3, qri.model.4, qri.model.5)
+stargazer(qri, title = "HLM models for QRI Percentatge Score (Post)",
+          dep.var.labels = "Percentage Score for QRI (Post)",
+          covariate.labels = c("Intercept", "ELL Status", "IEP Status", "Free/Reduced Lunch", "QRI (Pre)", "Word Recog. (Post)", "Voc. Know. (Post)", "Syn. Know. (Post)", "Reading Comp. (Post)", "WIAT SS (Post)", "Keyboarding"), 
+          header = F, type = "latex", intercept.bottom = FALSE,
+          add.lines = varComp(qri), notes = "All predictors are grand-mean centered", notes.append = TRUE)
+```
+
+
+```{r mrq, echo = FALSE, include=FALSE}
+# mrq.model.1 <- lmer(POST_R_MRQ ~ (1|CLASS_ID), data = UDIO_DATASET_C)
+# mrq.model.2 <- lmer(POST_R_MRQ ~ ELL + IEP + FARMS + (1|CLASS_ID), data = UDIO_DATASET_C)
+# mrq.model.3 <- lmer(POST_R_MRQ ~ ELL + IEP + FARMS + PRE_R_MRQ_C + POST_RAPID_WR_AB_C + POST_RAPID_VK_AB_C + + POST_RAPID_SK_AB_C + POST_RAPID_RC_AB_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+# mrq.model.4 <- lmer(POST_R_MRQ ~ ELL + IEP + FARMS + PRE_R_MRQ_C + UDIO_CONDITION + (1|CLASS_ID), data = UDIO_DATASET_C)
+# mrq.model.5 <- lmer(POST_R_MRQ ~ ELL + IEP + FARMS + PRE_R_MRQ_C + UDIO_CONDITION + POST_WIAT_SS_C + (1|CLASS_ID), data = UDIO_DATASET_C)
+```
+
+```{r mrq_table, results="asis", echo=FALSE, include=FALSE}
+# mrq <- list(mrq.model.1, mrq.model.2, mrq.model.3, mrq.model.4, mrq.model.5)
+# stargazer(mrq, title = "HLM models for MRQ (Post)",
+#           dep.var.labels = "Average Score for MRQ (Post)",
+#           covariate.labels = c("Intercept", "ELL Status", "IEP Status", "Free/Reduced Lunch", "Reading MRQ (Pre)", "Word Recog. (Post)", "Voc. Know. (Post)", "Syn. Know. (Post)", "Reading Comp. (Post)", "Full", "Supported", "WIAT SS (Post)"), 
+#           header = F, type = "latex", intercept.bottom = FALSE,
+#           add.lines = varComp(mrq), notes = "All predictors are grand-mean centered", notes.append = TRUE)
+```
