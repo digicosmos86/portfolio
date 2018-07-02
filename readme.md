@@ -65,21 +65,21 @@ Total: 64 Courses.  Certificates: Specialization: 4, Individual: 29
 
 ###### Machine Learning
 
--*Statistical Learning (Stanford)
--*Machine Learning (Stanford)
--*Machine Learning: Foundations (UW)
--*Machine Learning: Regression (UW)
--*Machine Learning: Classification (UW)
--*Machine Learning: Clustering and Retrieval (UW)
--*Learning From Data: Introductory Machine Learning Course (CalTech)
--Principles of Machine Learning (Microsoft)
--Applied Machine Learning (Microsoft)  TO BE FINISHED
--Practical Predictive Analysis (UW)
--*Neural Networks and Deep Learning (deeplearning.ai)
--*Improving Deep Neural Networks: Hyperparameter tuning, Regularization and Optimization -(deeplearning.ai)
--*Structuring Machine Learning Projects (deeplearning.ai)
--*Convolutional Neural Networks (deeplearning.ai)
--*Sequence Models (deeplearning.ai)
+- *Statistical Learning (Stanford)
+- *Machine Learning (Stanford)
+- *Machine Learning: Foundations (UW)
+- *Machine Learning: Regression (UW)
+- *Machine Learning: Classification (UW)
+- *Machine Learning: Clustering and Retrieval (UW)
+- *Learning From Data: Introductory Machine Learning Course (CalTech)
+- Principles of Machine Learning (Microsoft)
+- Applied Machine Learning (Microsoft)  TO BE FINISHED
+- Practical Predictive Analysis (UW)
+- *Neural Networks and Deep Learning (deeplearning.ai)
+- *Improving Deep Neural Networks: Hyperparameter tuning, Regularization and Optimization -( deeplearning.ai)
+- *Structuring Machine Learning Projects (deeplearning.ai)
+- *Convolutional Neural Networks (deeplearning.ai)
+- *Sequence Models (deeplearning.ai)
 
 ###### Data Science
 
